@@ -373,6 +373,12 @@ html, body {
 }
 .btn-create-cancel:hover { color: var(--text); border-color: var(--text-2) }
 
+.form-error {
+  font-size: 11px;
+  color: var(--danger);
+  margin: 0;
+}
+
 /* ─── Delete confirmation inline ────────────────────────────── */
 .del-confirm-text {
   font-size: 12px;

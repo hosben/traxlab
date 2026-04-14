@@ -87,6 +87,7 @@ function showCreateForm() {
       maxlength="60"
       autocomplete="off"
     />
+    <p class="form-error hidden"></p>
     <div class="create-playlist-actions">
       <button class="btn-create-confirm">Create</button>
       <button class="btn-create-cancel">Cancel</button>
@@ -110,24 +111,51 @@ async function submitCreate(input) {
   const name = input.value.trim()
   if (!name) { input.focus(); return }
 
-  const form = document.getElementById('create-playlist-form')
-  const btn  = form?.querySelector('.btn-create-confirm')
+  const form    = document.getElementById('create-playlist-form')
+  const btn     = form?.querySelector('.btn-create-confirm')
+  const errEl   = form?.querySelector('.form-error')
+
   if (btn) { btn.disabled = true; btn.textContent = '…' }
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) { form?.remove(); return }
+  try {
+    const { data: { user }, error: authErr } = await supabase.auth.getUser()
+    console.log('[Traxlab] createPlaylist user:', user?.id, authErr)
 
-  const { data, error } = await supabase
-    .from('playlists')
-    .insert({ name, user_id: user.id })
-    .select()
-    .single()
+    if (!user) {
+      showFormError(errEl, 'Not authenticated.')
+      if (btn) { btn.disabled = false; btn.textContent = 'Create' }
+      return
+    }
 
-  form?.remove()
+    const { data, error } = await supabase
+      .from('playlists')
+      .insert({ name, user_id: user.id })
+      .select()
+      .single()
 
-  if (error) { console.error('[Traxlab] playlist create:', error); return }
-  playlists.push(data)
-  renderSidebar()
+    console.log('[Traxlab] playlist insert result:', data, error)
+
+    if (error) {
+      showFormError(errEl, error.message)
+      if (btn) { btn.disabled = false; btn.textContent = 'Create' }
+      return
+    }
+
+    form?.remove()
+    playlists.push(data)
+    renderSidebar()
+
+  } catch (err) {
+    console.error('[Traxlab] playlist create exception:', err)
+    showFormError(errEl, 'Unexpected error.')
+    if (btn) { btn.disabled = false; btn.textContent = 'Create' }
+  }
+}
+
+function showFormError(el, msg) {
+  if (!el) return
+  el.textContent = msg
+  el.classList.remove('hidden')
 }
 
 // ─── Delete ───────────────────────────────────────────────────
