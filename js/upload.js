@@ -1,4 +1,5 @@
-import { supabase } from './supabase.js'
+import { supabase }     from './supabase.js'
+import { analyzeAudio } from './analyzer.js'
 
 const ACCEPTED_TYPES = [
   'audio/wav', 'audio/x-wav',
@@ -25,7 +26,6 @@ export function initUpload({ onTrackAdded }) {
   })
 
   dropzone.addEventListener('dragleave', e => {
-    // ignore events from child elements
     if (!dropzone.contains(e.relatedTarget)) dropzone.classList.remove('drag-over')
   })
 
@@ -39,44 +39,46 @@ export function initUpload({ onTrackAdded }) {
 // ─── Handle multiple files ───────────────────────────────────
 async function handleFiles(files, onTrackAdded) {
   const valid = files.filter(isAccepted)
-
   if (!valid.length) {
-    showGlobalError('Only WAV and AIFF files are accepted.')
+    showGlobalError('Accepted formats: WAV, AIFF, MP3, FLAC, OGG.')
     return
   }
-
-  for (const file of valid) {
-    await uploadFile(file, onTrackAdded)
-  }
+  // Process files concurrently
+  await Promise.all(valid.map(file => uploadFile(file, onTrackAdded)))
 }
 
-// ─── Single file upload ──────────────────────────────────────
+// ─── Single file: upload + analyse in parallel ───────────────
 async function uploadFile(file, onTrackAdded) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
-  const safeFilename  = sanitizeFilename(file.name)
-  const storagePath   = `${user.id}/${Date.now()}_${safeFilename}`
+  const safeFilename = sanitizeFilename(file.name)
+  const storagePath  = `${user.id}/${Date.now()}_${safeFilename}`
+  const itemEl       = addQueueItem(file.name)
 
-  const itemEl = addQueueItem(file.name)
+  // Run upload and analysis in parallel
+  const [uploadResult, analysis] = await Promise.all([
+    supabase.storage.from('tracks').upload(storagePath, file, { upsert: false }),
+    analyzeAudio(file, msg => setItemStatus(itemEl, 'progress', msg)).catch(() => null),
+  ])
 
-  // Upload to Storage
-  const { error: uploadError } = await supabase.storage
-    .from('tracks')
-    .upload(storagePath, file, { upsert: false })
-
-  if (uploadError) {
-    setItemStatus(itemEl, 'error', uploadError.message)
+  if (uploadResult.error) {
+    setItemStatus(itemEl, 'error', uploadResult.error.message)
     return
   }
 
-  // Register in DB
+  setItemStatus(itemEl, 'progress', 'Saving…')
+
   const { data: track, error: dbError } = await supabase
     .from('tracks')
     .insert({
-      user_id:      user.id,
-      filename:     file.name,
-      storage_path: storagePath,
+      user_id:          user.id,
+      filename:         file.name,
+      storage_path:     storagePath,
+      duration_seconds: analysis?.duration  ?? null,
+      bpm:              analysis?.bpm       ?? null,
+      key:              analysis?.key       ?? null,
+      waveform:         analysis?.waveform  ?? null,
     })
     .select()
     .single()
@@ -102,25 +104,33 @@ function addQueueItem(filename) {
     <span class="queue-status uploading">Uploading…</span>
   `
   queue.appendChild(el)
-
-  // Auto-remove after success
   return el
 }
 
 function setItemStatus(el, status, msg) {
   const statusEl = el.querySelector('.queue-status')
+
   if (status === 'done') {
     statusEl.textContent = 'Done'
     statusEl.className   = 'queue-status done'
-    setTimeout(() => el.remove(), 2000)
-  } else {
+    setTimeout(() => {
+      el.remove()
+      const queue = document.getElementById('upload-queue')
+      if (!queue.children.length) queue.classList.add('hidden')
+    }, 2000)
+  } else if (status === 'error') {
     statusEl.textContent = msg || 'Error'
     statusEl.className   = 'queue-status error'
-    setTimeout(() => el.remove(), 5000)
+    setTimeout(() => {
+      el.remove()
+      const queue = document.getElementById('upload-queue')
+      if (!queue.children.length) queue.classList.add('hidden')
+    }, 5000)
+  } else {
+    // progress
+    statusEl.textContent = msg || '…'
+    statusEl.className   = 'queue-status uploading'
   }
-
-  const queue = document.getElementById('upload-queue')
-  if (!queue.children.length) queue.classList.add('hidden')
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -134,7 +144,7 @@ function sanitizeFilename(name) {
 }
 
 function escapeHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
 function showGlobalError(msg) {
