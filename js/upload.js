@@ -58,7 +58,7 @@ async function uploadFile(file, onTrackAdded) {
   const itemEl       = addQueueItem(file.name)
 
   // Read once — avoids concurrent reads of the same File handle
-  setItemStatus(itemEl, 'progress', 'Reading…')
+  setItemStatus(itemEl, 'progress', 'Reading…', 3)
   let arrayBuffer
   try {
     arrayBuffer = await file.arrayBuffer()
@@ -70,13 +70,13 @@ async function uploadFile(file, onTrackAdded) {
   }
 
   // Upload and analyse in parallel using independent copies of the data
-  setItemStatus(itemEl, 'progress', 'Uploading…')
+  setItemStatus(itemEl, 'progress', 'Uploading…', 8)
 
   const blob = new Blob([arrayBuffer], { type: file.type || 'application/octet-stream' })
 
   const [uploadResult, analysis] = await Promise.all([
     supabase.storage.from('tracks').upload(storagePath, blob, { upsert: false }),
-    analyzeAudio(arrayBuffer, msg => setItemStatus(itemEl, 'progress', msg))
+    analyzeAudio(arrayBuffer, (msg, pct) => setItemStatus(itemEl, 'progress', msg, pct))
       .catch(err => { console.error('[Traxlab] analysis error:', err); return null }),
   ])
 
@@ -88,7 +88,7 @@ async function uploadFile(file, onTrackAdded) {
     return
   }
 
-  setItemStatus(itemEl, 'progress', 'Saving…')
+  setItemStatus(itemEl, 'progress', 'Saving…', 92)
 
   const { data: track, error: dbError } = await supabase
     .from('tracks')
@@ -123,35 +123,45 @@ function addQueueItem(filename) {
   const el = document.createElement('div')
   el.className = 'queue-item'
   el.innerHTML = `
-    <span class="queue-name">${escapeHtml(filename)}</span>
-    <span class="queue-status uploading">Uploading…</span>
+    <div class="queue-item-row">
+      <span class="queue-name">${escapeHtml(filename)}</span>
+      <span class="queue-status uploading">Uploading…</span>
+    </div>
+    <div class="queue-progress">
+      <div class="queue-progress-bar" style="width:0%"></div>
+    </div>
   `
   queue.appendChild(el)
   return el
 }
 
-function setItemStatus(el, status, msg) {
+function setItemStatus(el, status, msg, pct) {
   const statusEl = el.querySelector('.queue-status')
+  const barEl    = el.querySelector('.queue-progress-bar')
 
   if (status === 'done') {
-    statusEl.textContent = 'Done'
-    statusEl.className   = 'queue-status done'
+    statusEl.textContent  = 'Done ✓'
+    statusEl.className    = 'queue-status done'
+    if (barEl) { barEl.style.width = '100%'; barEl.classList.add('queue-progress-bar--done') }
     setTimeout(() => {
       el.remove()
       const queue = document.getElementById('upload-queue')
       if (!queue.children.length) queue.classList.add('hidden')
     }, 2000)
   } else if (status === 'error') {
-    statusEl.textContent = msg || 'Error'
-    statusEl.className   = 'queue-status error'
+    statusEl.textContent  = msg || 'Error'
+    statusEl.className    = 'queue-status error'
+    if (barEl) { barEl.style.width = '100%'; barEl.classList.add('queue-progress-bar--error') }
     setTimeout(() => {
       el.remove()
       const queue = document.getElementById('upload-queue')
       if (!queue.children.length) queue.classList.add('hidden')
     }, 5000)
   } else {
-    statusEl.textContent = msg || '…'
+    const pctText = pct != null ? ` ${pct}%` : ''
+    statusEl.textContent = (msg || '…') + pctText
     statusEl.className   = 'queue-status uploading'
+    if (barEl && pct != null) barEl.style.width = `${pct}%`
   }
 }
 

@@ -528,11 +528,18 @@ html, body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 8px 14px;
+  padding: 8px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.queue-item-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  gap: 8px;
 }
 
 .queue-name {
@@ -540,12 +547,37 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 70%;
+  flex: 1;
+  min-width: 0;
+}
+
+.queue-status {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 .queue-status.uploading { color: var(--text-2) }
 .queue-status.done      { color: var(--success) }
 .queue-status.error     { color: var(--danger) }
+
+.queue-progress {
+  height: 3px;
+  background: var(--surface-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.queue-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.35s ease;
+}
+
+.queue-progress-bar--done  { background: var(--success) }
+.queue-progress-bar--error { background: var(--danger) }
 
 /* ─── Library error ────────────────────────────────────────── */
 .library-error {

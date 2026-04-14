@@ -11,7 +11,7 @@ const KEY_SAMPLE_RATE  = 8000 // downsample target for key (saves CPU)
 // ─── Public API ──────────────────────────────────────────────
 // arrayBuffer: ArrayBuffer (already read by caller)
 export async function analyzeAudio(arrayBuffer, onProgress) {
-  onProgress?.('Decoding…')
+  onProgress?.('Decoding…', 10)
 
   // slice() creates a copy — decodeAudioData transfers (detaches) the buffer
   const audioBuffer = await new Promise((resolve, reject) => {
@@ -26,15 +26,15 @@ export async function analyzeAudio(arrayBuffer, onProgress) {
   const duration = audioBuffer.duration
   console.log('[Traxlab] Decoded. Duration:', duration, 'SR:', audioBuffer.sampleRate)
 
-  onProgress?.('Waveform…')
+  onProgress?.('Waveform…', 35)
   const waveform = extractWaveform(audioBuffer)
   console.log('[Traxlab] Waveform points:', waveform.length)
 
-  onProgress?.('BPM…')
+  onProgress?.('BPM…', 50)
   const bpm = await detectBPM(audioBuffer)
   console.log('[Traxlab] BPM:', bpm)
 
-  onProgress?.('Key…')
+  onProgress?.('Key…', 80)
   const key = detectKey(audioBuffer)
   console.log('[Traxlab] Key:', key)
 
