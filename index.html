@@ -135,6 +135,48 @@
 
 </div><!-- /#app-screen -->
 
+<!-- ── Rekordbox tip banner ───────────────────────────────────── -->
+<div id="rekordbox-tip" class="tip-banner hidden">
+  <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clip-rule="evenodd"/>
+  </svg>
+  <p>
+    <strong>Rekordbox tip:</strong> For the exported XML to work, save your audio files in a folder named
+    <code>Traxlab</code> at the root of your home directory. The XML points to
+    <code>file://localhost/Traxlab/[filename]</code>.
+  </p>
+  <button id="tip-dismiss-btn" aria-label="Dismiss">×</button>
+</div>
+
+<!-- ── Player panel ───────────────────────────────────────────── -->
+<div id="player-panel" class="player-panel hidden">
+  <div class="player-info">
+    <span id="player-name" class="player-name"></span>
+    <span id="player-bpm"  class="player-tag"></span>
+    <span id="player-key"  class="player-tag"></span>
+  </div>
+
+  <div class="player-controls">
+    <button id="player-prev" class="player-btn" title="Previous">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.712 5.166a.75.75 0 0 1 .788.066l7 5a.75.75 0 0 1 0 1.236l-7 5A.75.75 0 0 1 7.25 15.5v-2.38l-4.488 3.203A.75.75 0 0 1 1.5 15.5v-11a.75.75 0 0 1 1.262-.553L7.25 6.88V4.5a.75.75 0 0 1 .462-.834Z" transform="scale(-1,1) translate(-20,0)"/></svg>
+    </button>
+    <button id="player-play-pause" class="player-btn player-btn-main" title="Play/Pause">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M6.3 2.84A1.5 1.5 0 0 0 4 4.11v11.78a1.5 1.5 0 0 0 2.3 1.27l9.344-5.891a1.5 1.5 0 0 0 0-2.538L6.3 2.84Z"/></svg>
+    </button>
+    <button id="player-next" class="player-btn" title="Next">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.712 5.166a.75.75 0 0 1 .788.066l7 5a.75.75 0 0 1 0 1.236l-7 5A.75.75 0 0 1 7.25 15.5v-2.38l-4.488 3.203A.75.75 0 0 1 1.5 15.5v-11a.75.75 0 0 1 1.262-.553L7.25 6.88V4.5a.75.75 0 0 1 .462-.834Z"/></svg>
+    </button>
+  </div>
+
+  <div class="player-timeline">
+    <span id="player-time" class="player-time">0:00</span>
+    <canvas id="player-waveform" class="player-waveform"></canvas>
+    <span id="player-duration" class="player-time">0:00</span>
+  </div>
+
+  <button id="player-close-btn" class="player-close" title="Close player">×</button>
+</div>
+
 <!-- ── Add to playlist modal ─────────────────────────────────── -->
 <div id="modal-overlay" class="modal-overlay hidden">
   <div class="modal-card">
@@ -163,6 +205,16 @@
     await initPlaylists()
     initUpload({ onTrackAdded: addTrackToList })
     document.getElementById('export-btn').addEventListener('click', exportRekordbox)
+
+    // Rekordbox tip banner
+    const tip = document.getElementById('rekordbox-tip')
+    if (!localStorage.getItem('traxlab_tip_dismissed')) {
+      tip.classList.remove('hidden')
+    }
+    document.getElementById('tip-dismiss-btn').addEventListener('click', () => {
+      tip.classList.add('hidden')
+      localStorage.setItem('traxlab_tip_dismissed', '1')
+    })
   }
 </script>
 

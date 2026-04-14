@@ -1,4 +1,5 @@
-import { supabase } from './supabase.js'
+import { supabase }        from './supabase.js'
+import { initPlayer, playerOpenTrack } from './player.js'
 
 // ─── State ────────────────────────────────────────────────────
 const state = {
@@ -23,6 +24,17 @@ export async function initLibrary() {
   setupSearch()
   setupSort()
   render()
+
+  initPlayer(getNeighbors)
+}
+
+function getNeighbors(trackId) {
+  const tracks = getVisible()
+  const idx    = tracks.findIndex(t => t.id === trackId)
+  return {
+    prev: idx > 0               ? tracks[idx - 1] : null,
+    next: idx < tracks.length-1 ? tracks[idx + 1] : null,
+  }
 }
 
 // ─── View switching (called by playlists.js) ──────────────────
@@ -108,6 +120,12 @@ function buildRow(track) {
     </div>
     <button class="track-menu-btn" data-id="${track.id}">⋯</button>
   `
+
+  // Click row → open player (ignore clicks on interactive children)
+  row.addEventListener('click', e => {
+    if (e.target.closest('.track-tags, .track-menu-btn, .tag-x, .tag-add, .tag-input')) return
+    playerOpenTrack(track)
+  })
 
   // Tag chip → filter
   row.querySelectorAll('.tag').forEach(chip => {
