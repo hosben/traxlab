@@ -59,7 +59,10 @@ async function uploadFile(file, onTrackAdded) {
   // Run upload and analysis in parallel
   const [uploadResult, analysis] = await Promise.all([
     supabase.storage.from('tracks').upload(storagePath, file, { upsert: false }),
-    analyzeAudio(file, msg => setItemStatus(itemEl, 'progress', msg)).catch(() => null),
+    analyzeAudio(file, msg => setItemStatus(itemEl, 'progress', msg)).catch(err => {
+      console.error('[Traxlab] Analysis failed:', err)
+      return null
+    }),
   ])
 
   if (uploadResult.error) {

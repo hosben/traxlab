@@ -13,16 +13,17 @@ export async function analyzeAudio(file, onProgress) {
   onProgress?.('Decoding…')
 
   const arrayBuffer = await file.arrayBuffer()
-  const audioCtx    = new AudioContext()
 
-  let audioBuffer
-  try {
-    audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
-  } catch (err) {
-    audioCtx.close()
-    throw new Error(`Could not decode audio: ${err.message}`)
-  }
-  audioCtx.close()
+  // decodeAudioData needs a live context only for decoding;
+  // we close it immediately after to free resources.
+  const audioBuffer = await new Promise((resolve, reject) => {
+    const ctx = new AudioContext()
+    ctx.decodeAudioData(
+      arrayBuffer,
+      buf => { ctx.close(); resolve(buf) },
+      err => { ctx.close(); reject(err ?? new Error('decodeAudioData failed')) }
+    )
+  })
 
   const duration = audioBuffer.duration
 
