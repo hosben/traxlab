@@ -1,0 +1,231 @@
+/* ─── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+
+:root {
+  --bg:        #0c0c0e;
+  --surface:   #141417;
+  --surface-2: #1c1c21;
+  --border:    #2a2a32;
+  --text:      #e8e8ee;
+  --text-2:    #8a8a9a;
+  --accent:    #7c6af7;
+  --accent-h:  #9b8cff;
+  --danger:    #e05a5a;
+  --success:   #4aaa78;
+  --radius:    10px;
+  --font:      'Inter', system-ui, -apple-system, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Utility ──────────────────────────────────────────────── */
+.hidden { display: none !important }
+
+/* ─── Auth screen ──────────────────────────────────────────── */
+#auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 36px;
+}
+
+.auth-logo {
+  display: block;
+  margin: 0 auto 32px;
+  height: 28px;
+  width: auto;
+}
+
+/* tint the logo white so it works on dark bg */
+.auth-logo path { fill: var(--text) }
+
+#auth-mode-title {
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 28px;
+  color: var(--text);
+}
+
+/* ─── Form ─────────────────────────────────────────────────── */
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.auth-field label {
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.auth-field input {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 15px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color .15s;
+  width: 100%;
+}
+
+.auth-field input:focus {
+  border-color: var(--accent);
+}
+
+.auth-field input::placeholder {
+  color: var(--text-2);
+  opacity: .5;
+}
+
+/* ─── Auth message ─────────────────────────────────────────── */
+.auth-message {
+  font-size: 13px;
+  min-height: 18px;
+  margin-bottom: 14px;
+  border-radius: 6px;
+  padding: 0;
+}
+
+.auth-message.error {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  padding: 8px 12px;
+}
+
+.auth-message.info {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  padding: 8px 12px;
+}
+
+/* ─── Buttons ──────────────────────────────────────────────── */
+.btn-primary {
+  width: 100%;
+  padding: 11px 16px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background .15s, opacity .15s;
+  margin-bottom: 20px;
+}
+
+.btn-primary:hover:not(:disabled) { background: var(--accent-h) }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed }
+
+/* ─── Toggle link ──────────────────────────────────────────── */
+.auth-toggle {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.auth-toggle a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-toggle a:hover { text-decoration: underline }
+
+/* ─── App screen ───────────────────────────────────────────── */
+#app-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-header {
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+}
+
+.app-header svg {
+  height: 20px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.app-header svg path { fill: var(--text) }
+
+.header-spacer { flex: 1 }
+
+#user-email {
+  font-size: 13px;
+  color: var(--text-2);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-signout {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-2);
+  font-size: 13px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+
+.btn-signout:hover {
+  border-color: var(--text-2);
+  color: var(--text);
+}
+
+.app-main {
+  flex: 1;
+  padding: 32px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-empty {
+  text-align: center;
+  color: var(--text-2);
+}
+
+.app-empty h2 {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.app-empty p {
+  font-size: 14px;
+}
