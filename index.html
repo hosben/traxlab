@@ -80,6 +80,21 @@
         </div>
         <div id="playlist-nav"></div>
       </div>
+
+      <!-- Theme switcher -->
+      <div class="sidebar-section sidebar-themes">
+        <div class="sidebar-label"><span>Theme</span></div>
+        <button class="theme-btn" data-theme="pure">
+          <span class="theme-swatch" style="background:#7c6af7"></span>
+          <span class="theme-name">Traxlab Pure</span>
+          <span class="theme-check">✓</span>
+        </button>
+        <button class="theme-btn" data-theme="mint">
+          <span class="theme-swatch" style="background:#1DCD9F"></span>
+          <span class="theme-name">Traxlab Mint</span>
+          <span class="theme-check">✓</span>
+        </button>
+      </div>
     </aside>
 
     <!-- ── Main content ── -->
@@ -195,9 +210,25 @@
   import { initPlaylists }                   from './js/playlists.js'
   import { exportRekordbox }                 from './js/exporter.js'
 
+  // ── Theme ──────────────────────────────────────────────────
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('traxlab_theme', theme)
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.theme === theme)
+    })
+  }
+
+  // Load saved theme immediately (before paint)
+  applyTheme(localStorage.getItem('traxlab_theme') || 'pure')
+
   document.addEventListener('DOMContentLoaded', () => {
     initAuth()
     document.getElementById('btn-signout').addEventListener('click', signOut)
+
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.addEventListener('click', () => applyTheme(btn.dataset.theme))
+    })
   })
 
   window.__onAppReady = async () => {
