@@ -320,8 +320,12 @@ html, body {
 .playlist-item:hover .sidebar-item-del { opacity: 1 }
 .sidebar-item-del:hover { color: var(--danger) }
 
-.new-playlist-wrap {
-  padding: 2px 4px;
+/* ─── Create playlist form ──────────────────────────────────── */
+.create-playlist-form {
+  padding: 6px 4px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .new-playlist-input {
@@ -332,9 +336,74 @@ html, body {
   color: var(--text);
   font-size: 13px;
   font-family: var(--font);
-  padding: 6px 10px;
+  padding: 7px 10px;
   outline: none;
+  box-sizing: border-box;
 }
+
+.create-playlist-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-create-confirm,
+.btn-create-cancel {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  border: none;
+  transition: background .12s;
+}
+
+.btn-create-confirm {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-create-confirm:hover:not(:disabled) { background: var(--accent-h) }
+.btn-create-confirm:disabled { opacity: .5; cursor: not-allowed }
+
+.btn-create-cancel {
+  background: var(--surface-2);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+.btn-create-cancel:hover { color: var(--text); border-color: var(--text-2) }
+
+/* ─── Delete confirmation inline ────────────────────────────── */
+.del-confirm-text {
+  font-size: 12px;
+  color: var(--danger);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.del-confirm-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.del-yes, .del-no {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font);
+  padding: 2px 7px;
+  cursor: pointer;
+  transition: background .1s, border-color .1s;
+}
+
+.del-yes { color: var(--danger); border-color: var(--danger) }
+.del-yes:hover { background: color-mix(in srgb, var(--danger) 12%, transparent) }
+.del-no  { color: var(--text-2) }
+.del-no:hover  { border-color: var(--text-2); color: var(--text) }
 
 /* ─── Main wrap ─────────────────────────────────────────────── */
 .main-wrap {

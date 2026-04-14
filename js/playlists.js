@@ -1,8 +1,9 @@
 import { supabase } from './supabase.js'
 import { setView }   from './library.js'
 
-let playlists    = []
+let playlists        = []
 let activePlaylistId = null
+let pendingDeleteId  = null
 
 // ─── Init ─────────────────────────────────────────────────────
 export async function initPlaylists() {
@@ -15,12 +16,10 @@ export async function initPlaylists() {
   renderSidebar()
 
   document.getElementById('nav-library').addEventListener('click', goToLibrary)
-  document.getElementById('new-playlist-btn').addEventListener('click', createPlaylist)
+  document.getElementById('new-playlist-btn').addEventListener('click', showCreateForm)
 
-  // Expose to library.js track menu
   window.__showAddToPlaylist = showAddToPlaylistModal
 
-  // Modal close
   document.getElementById('modal-overlay').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeModal()
   })
@@ -34,21 +33,110 @@ function renderSidebar() {
 
   playlists.forEach(pl => {
     const el = document.createElement('div')
-    el.className   = 'sidebar-item playlist-item'
-    el.dataset.id  = pl.id
+    el.className  = 'sidebar-item playlist-item'
+    el.dataset.id = pl.id
     if (pl.id === activePlaylistId) el.classList.add('active')
 
-    el.innerHTML = `
-      <span class="sidebar-item-label">${esc(pl.name)}</span>
-      <button class="sidebar-item-del" data-id="${pl.id}" title="Delete playlist">×</button>
-    `
-    el.querySelector('.sidebar-item-label').addEventListener('click', () => openPlaylist(pl))
-    el.querySelector('.sidebar-item-del').addEventListener('click', e => {
-      e.stopPropagation()
-      deletePlaylist(pl.id)
-    })
+    if (pendingDeleteId === pl.id) {
+      // Inline delete confirmation
+      el.innerHTML = `
+        <span class="sidebar-item-label del-confirm-text">Delete "${esc(pl.name)}"?</span>
+        <span class="del-confirm-actions">
+          <button class="del-yes" data-id="${pl.id}">Yes</button>
+          <button class="del-no">No</button>
+        </span>
+      `
+      el.querySelector('.del-yes').addEventListener('click', e => {
+        e.stopPropagation(); confirmDelete(pl.id)
+      })
+      el.querySelector('.del-no').addEventListener('click', e => {
+        e.stopPropagation(); pendingDeleteId = null; renderSidebar()
+      })
+    } else {
+      el.innerHTML = `
+        <span class="sidebar-item-label">${esc(pl.name)}</span>
+        <button class="sidebar-item-del" data-id="${pl.id}" title="Delete">×</button>
+      `
+      el.querySelector('.sidebar-item-label').addEventListener('click', () => openPlaylist(pl))
+      el.querySelector('.sidebar-item-del').addEventListener('click', e => {
+        e.stopPropagation()
+        pendingDeleteId = pl.id
+        renderSidebar()
+      })
+    }
+
     nav.appendChild(el)
   })
+}
+
+// ─── Create form (inline in sidebar) ─────────────────────────
+function showCreateForm() {
+  // Toggle: if already open, close it
+  const existing = document.getElementById('create-playlist-form')
+  if (existing) { existing.remove(); return }
+
+  const form = document.createElement('div')
+  form.id        = 'create-playlist-form'
+  form.className = 'create-playlist-form'
+  form.innerHTML = `
+    <input
+      id="new-playlist-input"
+      class="new-playlist-input"
+      type="text"
+      placeholder="Playlist name…"
+      maxlength="60"
+      autocomplete="off"
+    />
+    <div class="create-playlist-actions">
+      <button class="btn-create-confirm">Create</button>
+      <button class="btn-create-cancel">Cancel</button>
+    </div>
+  `
+
+  document.getElementById('playlist-nav').before(form)
+
+  const input = form.querySelector('#new-playlist-input')
+  input.focus()
+
+  form.querySelector('.btn-create-confirm').addEventListener('click', () => submitCreate(input))
+  form.querySelector('.btn-create-cancel').addEventListener('click', () => form.remove())
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  submitCreate(input)
+    if (e.key === 'Escape') form.remove()
+  })
+}
+
+async function submitCreate(input) {
+  const name = input.value.trim()
+  if (!name) { input.focus(); return }
+
+  const form = document.getElementById('create-playlist-form')
+  const btn  = form?.querySelector('.btn-create-confirm')
+  if (btn) { btn.disabled = true; btn.textContent = '…' }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) { form?.remove(); return }
+
+  const { data, error } = await supabase
+    .from('playlists')
+    .insert({ name, user_id: user.id })
+    .select()
+    .single()
+
+  form?.remove()
+
+  if (error) { console.error('[Traxlab] playlist create:', error); return }
+  playlists.push(data)
+  renderSidebar()
+}
+
+// ─── Delete ───────────────────────────────────────────────────
+async function confirmDelete(id) {
+  await supabase.from('playlists').delete().eq('id', id)
+  playlists = playlists.filter(p => p.id !== id)
+  pendingDeleteId = null
+  if (activePlaylistId === id) goToLibrary()
+  else renderSidebar()
 }
 
 // ─── Navigation ──────────────────────────────────────────────
@@ -62,7 +150,6 @@ function goToLibrary() {
 
 async function openPlaylist(pl) {
   activePlaylistId = pl.id
-
   document.getElementById('nav-library').classList.remove('active')
   document.getElementById('view-title').textContent = pl.name
   document.querySelectorAll('.playlist-item').forEach(el => {
@@ -78,57 +165,6 @@ async function openPlaylist(pl) {
   setView(pl.id, (data || []).map(r => r.track_id))
 }
 
-// ─── CRUD ─────────────────────────────────────────────────────
-function createPlaylist() {
-  // Inline input in sidebar instead of prompt()
-  const nav = document.getElementById('playlist-nav')
-
-  // Don't open twice
-  if (document.getElementById('new-playlist-input')) return
-
-  const wrap = document.createElement('div')
-  wrap.className = 'new-playlist-wrap'
-  wrap.innerHTML = `<input id="new-playlist-input" class="new-playlist-input" type="text" placeholder="Playlist name…" maxlength="60" />`
-  nav.prepend(wrap)
-
-  const input = wrap.querySelector('input')
-  input.focus()
-
-  const commit = async () => {
-    const name = input.value.trim()
-    wrap.remove()
-    if (!name) return
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { data, error } = await supabase
-      .from('playlists')
-      .insert({ name, user_id: user.id })
-      .select()
-      .single()
-
-    if (error) { console.error('[Traxlab] playlist insert error:', error); return }
-    if (!data) return
-    playlists.push(data)
-    renderSidebar()
-  }
-
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter')  commit()
-    if (e.key === 'Escape') wrap.remove()
-  })
-  input.addEventListener('blur', commit)
-}
-
-async function deletePlaylist(id) {
-  if (!confirm('Delete this playlist?')) return
-  await supabase.from('playlists').delete().eq('id', id)
-  playlists = playlists.filter(p => p.id !== id)
-  if (activePlaylistId === id) goToLibrary()
-  else renderSidebar()
-}
-
 // ─── Add to playlist modal ────────────────────────────────────
 let pendingTrackId = null
 
@@ -139,9 +175,9 @@ function showAddToPlaylistModal(trackId) {
   if (!playlists.length) {
     list.innerHTML = '<p class="modal-empty">No playlists yet — create one first.</p>'
   } else {
-    list.innerHTML = playlists.map(pl => `
-      <button class="modal-pl-btn" data-id="${pl.id}">${esc(pl.name)}</button>
-    `).join('')
+    list.innerHTML = playlists.map(pl =>
+      `<button class="modal-pl-btn" data-id="${pl.id}">${esc(pl.name)}</button>`
+    ).join('')
 
     list.querySelectorAll('.modal-pl-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -170,7 +206,6 @@ async function addTrackToPlaylist(playlistId, trackId) {
     position,
   })
 
-  // Refresh if we're viewing this playlist
   if (activePlaylistId === playlistId) {
     const pl = playlists.find(p => p.id === playlistId)
     if (pl) openPlaylist(pl)
