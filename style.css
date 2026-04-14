@@ -320,6 +320,22 @@ html, body {
 .playlist-item:hover .sidebar-item-del { opacity: 1 }
 .sidebar-item-del:hover { color: var(--danger) }
 
+.new-playlist-wrap {
+  padding: 2px 4px;
+}
+
+.new-playlist-input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--font);
+  padding: 6px 10px;
+  outline: none;
+}
+
 /* ─── Main wrap ─────────────────────────────────────────────── */
 .main-wrap {
   flex: 1;

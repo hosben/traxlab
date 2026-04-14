@@ -79,16 +79,46 @@ async function openPlaylist(pl) {
 }
 
 // ─── CRUD ─────────────────────────────────────────────────────
-async function createPlaylist() {
-  const name = prompt('Playlist name:')?.trim()
-  if (!name) return
+function createPlaylist() {
+  // Inline input in sidebar instead of prompt()
+  const nav = document.getElementById('playlist-nav')
 
-  const { data, error } = await supabase
-    .from('playlists').insert({ name }).select().single()
+  // Don't open twice
+  if (document.getElementById('new-playlist-input')) return
 
-  if (error || !data) return
-  playlists.push(data)
-  renderSidebar()
+  const wrap = document.createElement('div')
+  wrap.className = 'new-playlist-wrap'
+  wrap.innerHTML = `<input id="new-playlist-input" class="new-playlist-input" type="text" placeholder="Playlist name…" maxlength="60" />`
+  nav.prepend(wrap)
+
+  const input = wrap.querySelector('input')
+  input.focus()
+
+  const commit = async () => {
+    const name = input.value.trim()
+    wrap.remove()
+    if (!name) return
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data, error } = await supabase
+      .from('playlists')
+      .insert({ name, user_id: user.id })
+      .select()
+      .single()
+
+    if (error) { console.error('[Traxlab] playlist insert error:', error); return }
+    if (!data) return
+    playlists.push(data)
+    renderSidebar()
+  }
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  commit()
+    if (e.key === 'Escape') wrap.remove()
+  })
+  input.addEventListener('blur', commit)
 }
 
 async function deletePlaylist(id) {
