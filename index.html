@@ -72,21 +72,57 @@
     </header>
 
     <main class="app-main">
-      <div class="app-empty">
-        <h2>Your library is empty</h2>
-        <p>Upload tracks to get started.</p>
+
+      <!-- Upload drop zone -->
+      <div id="dropzone">
+        <input id="file-input" type="file" accept=".wav,.aif,.aiff" multiple hidden />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+        </svg>
+        <p>Drop WAV or AIFF files here</p>
+        <button id="pick-files-btn" class="btn-pick">Browse files</button>
       </div>
+
+      <!-- Upload queue -->
+      <div id="upload-queue" class="hidden"></div>
+
+      <!-- Error line -->
+      <p id="library-error" class="library-error"></p>
+
+      <!-- Track list -->
+      <div id="track-list-wrap">
+        <div class="track-list-header">
+          <span>File</span>
+          <span>Duration</span>
+          <span>BPM</span>
+          <span>Key</span>
+        </div>
+        <div id="track-list"></div>
+        <p id="library-empty" class="library-empty hidden">
+          No tracks yet — upload your first file above.
+        </p>
+      </div>
+
     </main>
 
   </div>
 
   <script type="module">
     import { initAuth, signOut } from './js/auth.js'
+    import { initUpload }        from './js/upload.js'
+    import { initLibrary, addTrackToList } from './js/library.js'
 
     document.addEventListener('DOMContentLoaded', () => {
       initAuth()
       document.getElementById('btn-signout').addEventListener('click', signOut)
     })
+
+    // Called by auth.js once session is confirmed
+    window.__onAppReady = async () => {
+      await initLibrary()
+      initUpload({ onTrackAdded: addTrackToList })
+    }
   </script>
 
 </body>

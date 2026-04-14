@@ -83,10 +83,14 @@ function toggleMode(e) {
 }
 
 function onAuthSuccess(session) {
-  // Hide auth screen, show app
   document.getElementById('auth-screen').classList.add('hidden')
   document.getElementById('app-screen').classList.remove('hidden')
   document.getElementById('user-email').textContent = session.user.email
+
+  if (typeof window.__onAppReady === 'function') {
+    window.__onAppReady()
+    window.__onAppReady = null // run once
+  }
 }
 
 export async function signOut() {

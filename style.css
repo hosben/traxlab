@@ -208,24 +208,140 @@ html, body {
 
 .app-main {
   flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ─── Drop zone ────────────────────────────────────────────── */
+#dropzone {
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius);
   padding: 32px 24px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-}
-
-.app-empty {
-  text-align: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
   color: var(--text-2);
+  text-align: center;
 }
 
-.app-empty h2 {
-  font-size: 18px;
-  font-weight: 500;
-  margin-bottom: 8px;
-  color: var(--text);
+#dropzone svg {
+  width: 32px;
+  height: 32px;
+  opacity: .4;
 }
 
-.app-empty p {
+#dropzone p {
   font-size: 14px;
+}
+
+#dropzone.drag-over {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.btn-pick {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+
+.btn-pick:hover { border-color: var(--text-2) }
+
+/* ─── Upload queue ─────────────────────────────────────────── */
+#upload-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.queue-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.queue-name {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 70%;
+}
+
+.queue-status.uploading { color: var(--text-2) }
+.queue-status.done      { color: var(--success) }
+.queue-status.error     { color: var(--danger) }
+
+/* ─── Library error ────────────────────────────────────────── */
+.library-error {
+  font-size: 13px;
+  color: var(--danger);
+  min-height: 18px;
+}
+
+/* ─── Track list ───────────────────────────────────────────── */
+#track-list-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.track-list-header,
+.track-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 90px 70px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.track-list-header {
+  color: var(--text-2);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.track-row {
+  border-radius: 6px;
+  transition: background .1s;
+}
+
+.track-row:hover { background: var(--surface) }
+
+.track-name {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-meta {
+  color: var(--text-2);
+  text-align: right;
+}
+
+.library-empty {
+  color: var(--text-2);
+  font-size: 14px;
+  padding: 24px 12px;
 }
