@@ -26,15 +26,19 @@ export async function analyzeAudio(file, onProgress) {
   })
 
   const duration = audioBuffer.duration
+  console.log('[Traxlab] Decoded. Duration:', duration, 'SR:', audioBuffer.sampleRate)
 
   onProgress?.('Waveform…')
   const waveform = extractWaveform(audioBuffer)
+  console.log('[Traxlab] Waveform points:', waveform.length)
 
   onProgress?.('BPM…')
   const bpm = await detectBPM(audioBuffer)
+  console.log('[Traxlab] BPM:', bpm)
 
   onProgress?.('Key…')
   const key = detectKey(audioBuffer)
+  console.log('[Traxlab] Key:', key)
 
   return { duration, waveform, bpm, key }
 }

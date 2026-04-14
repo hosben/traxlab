@@ -70,19 +70,24 @@ async function uploadFile(file, onTrackAdded) {
     return
   }
 
+  console.log('[Traxlab] Analysis result:', analysis)
+
   setItemStatus(itemEl, 'progress', 'Saving…')
+
+  const payload = {
+    user_id:          user.id,
+    filename:         file.name,
+    storage_path:     storagePath,
+    duration_seconds: analysis?.duration  ?? null,
+    bpm:              analysis?.bpm       ?? null,
+    key:              analysis?.key       ?? null,
+    waveform:         analysis?.waveform  ?? null,
+  }
+  console.log('[Traxlab] Inserting:', payload.bpm, payload.key, payload.duration_seconds)
 
   const { data: track, error: dbError } = await supabase
     .from('tracks')
-    .insert({
-      user_id:          user.id,
-      filename:         file.name,
-      storage_path:     storagePath,
-      duration_seconds: analysis?.duration  ?? null,
-      bpm:              analysis?.bpm       ?? null,
-      key:              analysis?.key       ?? null,
-      waveform:         analysis?.waveform  ?? null,
-    })
+    .insert(payload)
     .select()
     .single()
 
@@ -90,6 +95,8 @@ async function uploadFile(file, onTrackAdded) {
     setItemStatus(itemEl, 'error', dbError.message)
     return
   }
+
+  console.log('[Traxlab] Track saved:', track.bpm, track.key, track.duration_seconds)
 
   setItemStatus(itemEl, 'done')
   onTrackAdded(track)
