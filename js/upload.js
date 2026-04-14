@@ -1,7 +1,13 @@
 import { supabase } from './supabase.js'
 
-const ACCEPTED_TYPES = ['audio/wav', 'audio/x-wav', 'audio/aiff', 'audio/x-aiff', 'audio/x-caf']
-const ACCEPTED_EXT   = ['.wav', '.aif', '.aiff']
+const ACCEPTED_TYPES = [
+  'audio/wav', 'audio/x-wav',
+  'audio/aiff', 'audio/x-aiff',
+  'audio/mpeg', 'audio/mp3',
+  'audio/flac', 'audio/x-flac',
+  'audio/ogg', 'audio/vorbis',
+]
+const ACCEPTED_EXT = ['.wav', '.aif', '.aiff', '.mp3', '.flac', '.ogg']
 
 // ─── Init ────────────────────────────────────────────────────
 export function initUpload({ onTrackAdded }) {
