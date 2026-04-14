@@ -1,5 +1,5 @@
-import { supabase }     from './supabase.js'
-import { analyzeAudio } from './analyzer.js'
+import { supabase }     from './supabase.js?v=2'
+import { analyzeAudio } from './analyzer.js?v=2'
 
 const ACCEPTED_TYPES = [
   'audio/wav', 'audio/x-wav',
