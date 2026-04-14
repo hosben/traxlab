@@ -9,17 +9,15 @@ const MAX_KEY_DURATION = 30   // seconds used for key analysis
 const KEY_SAMPLE_RATE  = 8000 // downsample target for key (saves CPU)
 
 // ─── Public API ──────────────────────────────────────────────
-export async function analyzeAudio(file, onProgress) {
+// arrayBuffer: ArrayBuffer (already read by caller)
+export async function analyzeAudio(arrayBuffer, onProgress) {
   onProgress?.('Decoding…')
 
-  const arrayBuffer = await file.arrayBuffer()
-
-  // decodeAudioData needs a live context only for decoding;
-  // we close it immediately after to free resources.
+  // slice() creates a copy — decodeAudioData transfers (detaches) the buffer
   const audioBuffer = await new Promise((resolve, reject) => {
     const ctx = new AudioContext()
     ctx.decodeAudioData(
-      arrayBuffer,
+      arrayBuffer.slice(0),
       buf => { ctx.close(); resolve(buf) },
       err => { ctx.close(); reject(err ?? new Error('decodeAudioData failed')) }
     )

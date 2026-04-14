@@ -43,61 +43,74 @@ async function handleFiles(files, onTrackAdded) {
     showGlobalError('Accepted formats: WAV, AIFF, MP3, FLAC, OGG.')
     return
   }
-  // Process files concurrently
   await Promise.all(valid.map(file => uploadFile(file, onTrackAdded)))
 }
 
-// ─── Single file: upload + analyse in parallel ───────────────
+// ─── Single file ─────────────────────────────────────────────
 async function uploadFile(file, onTrackAdded) {
+  console.log('[Traxlab] uploadFile:', file.name, file.size)
+
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
+  if (!user) { console.warn('[Traxlab] no user'); return }
 
   const safeFilename = sanitizeFilename(file.name)
   const storagePath  = `${user.id}/${Date.now()}_${safeFilename}`
   const itemEl       = addQueueItem(file.name)
 
-  // Run upload and analysis in parallel
-  const [uploadResult, analysis] = await Promise.all([
-    supabase.storage.from('tracks').upload(storagePath, file, { upsert: false }),
-    analyzeAudio(file, msg => setItemStatus(itemEl, 'progress', msg)).catch(err => {
-      console.error('[Traxlab] Analysis failed:', err)
-      return null
-    }),
-  ])
-
-  if (uploadResult.error) {
-    setItemStatus(itemEl, 'error', uploadResult.error.message)
+  // Read once — avoids concurrent reads of the same File handle
+  setItemStatus(itemEl, 'progress', 'Reading…')
+  let arrayBuffer
+  try {
+    arrayBuffer = await file.arrayBuffer()
+    console.log('[Traxlab] read', arrayBuffer.byteLength, 'bytes')
+  } catch (err) {
+    setItemStatus(itemEl, 'error', 'Could not read file.')
+    console.error('[Traxlab] arrayBuffer read failed:', err)
     return
   }
 
-  console.log('[Traxlab] Analysis result:', analysis)
+  // Upload and analyse in parallel using independent copies of the data
+  setItemStatus(itemEl, 'progress', 'Uploading…')
+
+  const blob = new Blob([arrayBuffer], { type: file.type || 'application/octet-stream' })
+
+  const [uploadResult, analysis] = await Promise.all([
+    supabase.storage.from('tracks').upload(storagePath, blob, { upsert: false }),
+    analyzeAudio(arrayBuffer, msg => setItemStatus(itemEl, 'progress', msg))
+      .catch(err => { console.error('[Traxlab] analysis error:', err); return null }),
+  ])
+
+  console.log('[Traxlab] analysis:', analysis?.bpm, analysis?.key, analysis?.duration)
+
+  if (uploadResult.error) {
+    setItemStatus(itemEl, 'error', uploadResult.error.message)
+    console.error('[Traxlab] upload error:', uploadResult.error)
+    return
+  }
 
   setItemStatus(itemEl, 'progress', 'Saving…')
 
-  const payload = {
-    user_id:          user.id,
-    filename:         file.name,
-    storage_path:     storagePath,
-    duration_seconds: analysis?.duration  ?? null,
-    bpm:              analysis?.bpm       ?? null,
-    key:              analysis?.key       ?? null,
-    waveform:         analysis?.waveform  ?? null,
-  }
-  console.log('[Traxlab] Inserting:', payload.bpm, payload.key, payload.duration_seconds)
-
   const { data: track, error: dbError } = await supabase
     .from('tracks')
-    .insert(payload)
+    .insert({
+      user_id:          user.id,
+      filename:         file.name,
+      storage_path:     storagePath,
+      duration_seconds: analysis?.duration ?? null,
+      bpm:              analysis?.bpm      ?? null,
+      key:              analysis?.key      ?? null,
+      waveform:         analysis?.waveform ?? null,
+    })
     .select()
     .single()
 
   if (dbError) {
     setItemStatus(itemEl, 'error', dbError.message)
+    console.error('[Traxlab] db error:', dbError)
     return
   }
 
-  console.log('[Traxlab] Track saved:', track.bpm, track.key, track.duration_seconds)
-
+  console.log('[Traxlab] saved — bpm:', track.bpm, 'key:', track.key, 'dur:', track.duration_seconds)
   setItemStatus(itemEl, 'done')
   onTrackAdded(track)
 }
@@ -137,7 +150,6 @@ function setItemStatus(el, status, msg) {
       if (!queue.children.length) queue.classList.add('hidden')
     }, 5000)
   } else {
-    // progress
     statusEl.textContent = msg || '…'
     statusEl.className   = 'queue-status uploading'
   }
