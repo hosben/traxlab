@@ -7,9 +7,6 @@ const ACCEPTED_EXT   = ['.wav', '.aif', '.aiff']
 export function initUpload({ onTrackAdded }) {
   const dropzone  = document.getElementById('dropzone')
   const fileInput = document.getElementById('file-input')
-  const pickBtn   = document.getElementById('pick-files-btn')
-
-  pickBtn.addEventListener('click', () => fileInput.click())
 
   fileInput.addEventListener('change', () => {
     handleFiles([...fileInput.files], onTrackAdded)
@@ -21,7 +18,10 @@ export function initUpload({ onTrackAdded }) {
     dropzone.classList.add('drag-over')
   })
 
-  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'))
+  dropzone.addEventListener('dragleave', e => {
+    // ignore events from child elements
+    if (!dropzone.contains(e.relatedTarget)) dropzone.classList.remove('drag-over')
+  })
 
   dropzone.addEventListener('drop', e => {
     e.preventDefault()
