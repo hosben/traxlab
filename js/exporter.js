@@ -7,29 +7,33 @@ export async function exportRekordbox() {
   btn.textContent = 'Exporting…'
 
   try {
-    const [tracksRes, playlistsRes, ptRes] = await Promise.all([
-      supabase.from('tracks').select('*').order('filename', { ascending: true }),
-      supabase.from('playlists').select('*').order('name', { ascending: true }),
-      supabase.from('playlist_tracks').select('*').order('position', { ascending: true }),
-    ])
-
-    const tracks    = tracksRes.data    || []
-    const playlists = playlistsRes.data || []
-    const ptRows    = ptRes.data        || []
-
-    // playlist_id → ordered track_id array
-    const plMap = {}
-    ptRows.forEach(row => {
-      if (!plMap[row.playlist_id]) plMap[row.playlist_id] = []
-      plMap[row.playlist_id].push(row.track_id)
-    })
-
-    const xml = buildXML(tracks, playlists, plMap)
+    const xml = await getXMLContent()
     download(xml, 'traxlab-rekordbox.xml')
   } finally {
     btn.disabled    = false
     btn.textContent = 'Export XML'
   }
+}
+
+// Returns the full XML string (used by device exporter too)
+export async function getXMLContent() {
+  const [tracksRes, playlistsRes, ptRes] = await Promise.all([
+    supabase.from('tracks').select('*').order('filename', { ascending: true }),
+    supabase.from('playlists').select('*').order('name', { ascending: true }),
+    supabase.from('playlist_tracks').select('*').order('position', { ascending: true }),
+  ])
+
+  const tracks    = tracksRes.data    || []
+  const playlists = playlistsRes.data || []
+  const ptRows    = ptRes.data        || []
+
+  const plMap = {}
+  ptRows.forEach(row => {
+    if (!plMap[row.playlist_id]) plMap[row.playlist_id] = []
+    plMap[row.playlist_id].push(row.track_id)
+  })
+
+  return buildXML(tracks, playlists, plMap)
 }
 
 // ─── XML builder ─────────────────────────────────────────────

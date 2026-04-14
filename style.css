@@ -802,6 +802,57 @@ html, body {
   width: 80px;
 }
 
+/* ─── Tag colors ────────────────────────────────────────────── */
+.tag-color-blue   { --tag-c: #4a9eff }
+.tag-color-yellow { --tag-c: #f5c842 }
+.tag-color-red    { --tag-c: #e05a5a }
+.tag-color-purple { --tag-c: #9b7df0 }
+.tag-color-green  { --tag-c: #4aaa78 }
+.tag-color-pink   { --tag-c: #e878ab }
+
+[class*="tag-color-"] {
+  border-color: var(--tag-c) !important;
+  color: var(--tag-c) !important;
+  background: color-mix(in srgb, var(--tag-c) 10%, transparent) !important;
+}
+
+[class*="tag-color-"].tag-active {
+  background: color-mix(in srgb, var(--tag-c) 20%, transparent) !important;
+}
+
+/* ─── Color picker (inline tag input) ──────────────────────── */
+.tag-input-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tag-color-picker {
+  display: flex;
+  gap: 4px;
+  padding: 2px 0;
+}
+
+.color-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: transform .1s, border-color .1s;
+}
+
+.color-dot:hover {
+  transform: scale(1.25);
+}
+
+.color-dot-active {
+  border-color: #fff;
+  transform: scale(1.2);
+}
+
 /* ─── Track menu button ─────────────────────────────────────── */
 .track-menu-btn {
   background: none;
@@ -1180,4 +1231,116 @@ html, body {
 
 .track-row.playing .track-name {
   color: var(--accent-h);
+}
+
+/* ─── Devices sidebar section ───────────────────────────────── */
+#devices-display {
+  padding: 2px 2px 4px;
+}
+
+.btn-device-connect {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1px dashed var(--border);
+  background: none;
+  color: var(--text-2);
+  font-size: 12px;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+
+.btn-device-connect svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.btn-device-connect:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.device-connected {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px;
+  background: color-mix(in srgb, var(--success) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+  border-radius: 7px;
+}
+
+.device-info {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.device-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--success);
+}
+
+.device-name {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.device-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.btn-device-export {
+  flex: 1;
+  padding: 4px 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.btn-device-export:hover:not(:disabled) { background: var(--accent-h) }
+.btn-device-export:disabled { opacity: .5; cursor: not-allowed }
+
+.btn-device-disconnect {
+  background: none;
+  border: none;
+  color: var(--text-2);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: color .12s;
+}
+
+.btn-device-disconnect:hover { color: var(--danger) }
+
+.device-hint {
+  font-size: 11px;
+  color: var(--text-2);
+  padding: 4px 2px;
+  line-height: 1.4;
 }

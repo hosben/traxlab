@@ -8,7 +8,19 @@ const state = {
   playlistIds:   [],        // track ids in current playlist view
   search:        '',
   sort:          { field: 'created_at', dir: 'desc' },
-  tagFilter:     null,
+  tagFilter:     null,     // name only (no color)
+}
+
+// ─── Tag helpers ──────────────────────────────────────────────
+// Tags are stored as "name::color" or just "name" (legacy)
+function parseTag(raw) {
+  const i = raw.lastIndexOf('::')
+  if (i === -1) return { name: raw, color: null }
+  return { name: raw.slice(0, i), color: raw.slice(i + 2) }
+}
+
+function buildRaw(name, color) {
+  return color ? `${name}::${color}` : name
 }
 
 // ─── Init ─────────────────────────────────────────────────────
@@ -66,7 +78,9 @@ function getVisible() {
   }
 
   if (state.tagFilter) {
-    tracks = tracks.filter(t => t.tags?.includes(state.tagFilter))
+    tracks = tracks.filter(t =>
+      (t.tags || []).some(raw => parseTag(raw).name === state.tagFilter)
+    )
   }
 
   const { field, dir } = state.sort
@@ -112,10 +126,15 @@ function buildRow(track) {
     <span class="track-bpm">${bpm}</span>
     <span class="track-key">${esc(key)}</span>
     <div class="track-tags">
-      ${tags.map(tag => `
-        <span class="tag${state.tagFilter === tag ? ' tag-active' : ''}" data-tag="${esc(tag)}">
-          ${esc(tag)}<button class="tag-x" data-id="${track.id}" data-tag="${esc(tag)}">×</button>
-        </span>`).join('')}
+      ${tags.map(raw => {
+        const { name, color } = parseTag(raw)
+        const isActive = state.tagFilter === name
+        const colorClass = color ? ` tag-color-${color}` : ''
+        const activeClass = isActive ? ' tag-active' : ''
+        return `<span class="tag${colorClass}${activeClass}" data-tag="${esc(name)}" data-raw="${esc(raw)}">
+          ${esc(name)}<button class="tag-x" data-id="${track.id}" data-raw="${esc(raw)}">×</button>
+        </span>`
+      }).join('')}
       <button class="tag-add" data-id="${track.id}">+</button>
     </div>
     <button class="track-menu-btn" data-id="${track.id}">⋯</button>
@@ -127,22 +146,22 @@ function buildRow(track) {
     playerOpenTrack(track)
   })
 
-  // Tag chip → filter
+  // Tag chip → filter by name
   row.querySelectorAll('.tag').forEach(chip => {
     chip.addEventListener('click', e => {
       if (e.target.classList.contains('tag-x')) return
-      const tag = chip.dataset.tag
-      state.tagFilter = state.tagFilter === tag ? null : tag
+      const name = chip.dataset.tag
+      state.tagFilter = state.tagFilter === name ? null : name
       updateTagFilterBadge()
       render()
     })
   })
 
-  // Remove tag
+  // Remove tag (use raw for exact match)
   row.querySelectorAll('.tag-x').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation()
-      applyTagUpdate(btn.dataset.id, (btn.dataset.tag), 'remove')
+      applyTagUpdate(btn.dataset.id, btn.dataset.raw, 'remove')
     })
   })
 
@@ -162,39 +181,91 @@ function buildRow(track) {
 }
 
 // ─── Tag input ────────────────────────────────────────────────
+const TAG_COLORS = {
+  blue:   '#4a9eff',
+  yellow: '#f5c842',
+  red:    '#e05a5a',
+  purple: '#9b7df0',
+  green:  '#4aaa78',
+  pink:   '#e878ab',
+}
+
 function openTagInput(trackId, container) {
   document.querySelectorAll('.tag-input-wrap').forEach(el => el.remove())
+
   const wrap  = document.createElement('span')
   wrap.className = 'tag-input-wrap'
+
   const input = document.createElement('input')
   input.className   = 'tag-input'
   input.type        = 'text'
   input.placeholder = 'tag…'
   input.maxLength   = 30
+
+  // Color picker
+  let selectedColor = null
+  const picker = document.createElement('div')
+  picker.className = 'tag-color-picker'
+
+  Object.entries(TAG_COLORS).forEach(([name, hex]) => {
+    const dot = document.createElement('button')
+    dot.type = 'button'
+    dot.className = 'color-dot'
+    dot.dataset.color = name
+    dot.style.background = hex
+    dot.title = name
+    // mousedown+preventDefault keeps focus in input
+    dot.addEventListener('mousedown', e => {
+      e.preventDefault()
+      selectedColor = selectedColor === name ? null : name
+      picker.querySelectorAll('.color-dot').forEach(d =>
+        d.classList.toggle('color-dot-active', d.dataset.color === selectedColor)
+      )
+    })
+    picker.appendChild(dot)
+  })
+
   wrap.appendChild(input)
+  wrap.appendChild(picker)
   container.appendChild(wrap)
   input.focus()
 
   const commit = () => {
     const val = input.value.trim().toLowerCase().replace(/\s+/g, '-')
     wrap.remove()
-    if (val) applyTagUpdate(trackId, val, 'add')
+    document.removeEventListener('click', dismiss)
+    if (val) applyTagUpdate(trackId, buildRaw(val, selectedColor), 'add')
   }
+
+  const dismiss = e => {
+    if (wrap.parentNode && !wrap.contains(e.target)) {
+      wrap.remove()
+      document.removeEventListener('click', dismiss)
+    }
+  }
+
   input.addEventListener('keydown', e => {
-    if (e.key === 'Enter')  commit()
-    if (e.key === 'Escape') wrap.remove()
+    if (e.key === 'Enter')  { e.preventDefault(); commit() }
+    if (e.key === 'Escape') { wrap.remove(); document.removeEventListener('click', dismiss) }
   })
-  input.addEventListener('blur', commit)
+
+  setTimeout(() => document.addEventListener('click', dismiss), 0)
 }
 
-async function applyTagUpdate(trackId, tag, action) {
+async function applyTagUpdate(trackId, rawValue, action) {
   const track = state.allTracks.find(t => t.id === trackId)
   if (!track) return
 
   const current = track.tags || []
-  const updated = action === 'add'
-    ? [...new Set([...current, tag])]
-    : current.filter(t => t !== tag)
+  let updated
+  if (action === 'add') {
+    // Replace any existing tag with same name (allows re-coloring)
+    const newName = parseTag(rawValue).name
+    updated = [...current.filter(r => parseTag(r).name !== newName), rawValue]
+  } else {
+    // Remove exact raw match
+    updated = current.filter(r => r !== rawValue)
+  }
 
   const { error } = await supabase
     .from('tracks').update({ tags: updated }).eq('id', trackId)

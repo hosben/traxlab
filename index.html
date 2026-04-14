@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=3" />
+  <link rel="stylesheet" href="style.css?v=4" />
 </head>
 <body>
 
@@ -79,6 +79,12 @@
           <button id="new-playlist-btn" title="New playlist">+</button>
         </div>
         <div id="playlist-nav"></div>
+      </div>
+
+      <!-- Devices section -->
+      <div class="sidebar-section">
+        <div class="sidebar-label"><span>Devices</span></div>
+        <div id="devices-display"></div>
       </div>
 
       <!-- Theme switcher -->
@@ -209,6 +215,7 @@
   import { initLibrary, addTrackToList }     from './js/library.js'
   import { initPlaylists }                   from './js/playlists.js'
   import { exportRekordbox }                 from './js/exporter.js'
+  import { initDevices }                     from './js/devices.js'
 
   // ── Theme ──────────────────────────────────────────────────
   function applyTheme(theme) {
@@ -234,6 +241,7 @@
   window.__onAppReady = async () => {
     await initLibrary()
     await initPlaylists()
+    initDevices()
     initUpload({ onTrackAdded: addTrackToList })
     document.getElementById('export-btn').addEventListener('click', exportRekordbox)
 
