@@ -581,6 +581,31 @@ html, body {
 #search-input:focus { border-color: var(--accent) }
 #search-input::placeholder { color: var(--text-2); opacity: .5 }
 
+.btn-export {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font);
+  padding: 6px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color .15s, color .15s;
+  flex-shrink: 0;
+}
+
+.btn-export:hover:not(:disabled) {
+  border-color: var(--text-2);
+  color: var(--text);
+}
+
+.btn-export:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
 .tag-filter-badge {
   background: color-mix(in srgb, var(--accent) 15%, transparent);
   color: var(--accent-h);

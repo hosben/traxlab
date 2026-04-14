@@ -110,6 +110,7 @@
           <input id="search-input" type="text" placeholder="Search tracks…" autocomplete="off" />
         </div>
         <span id="tag-filter-badge" class="tag-filter-badge hidden"></span>
+        <button id="export-btn" class="btn-export">Export XML</button>
       </div>
 
       <!-- Error -->
@@ -150,6 +151,7 @@
   import { initUpload }                      from './js/upload.js'
   import { initLibrary, addTrackToList }     from './js/library.js'
   import { initPlaylists }                   from './js/playlists.js'
+  import { exportRekordbox }                 from './js/exporter.js'
 
   document.addEventListener('DOMContentLoaded', () => {
     initAuth()
@@ -160,6 +162,7 @@
     await initLibrary()
     await initPlaylists()
     initUpload({ onTrackAdded: addTrackToList })
+    document.getElementById('export-btn').addEventListener('click', exportRekordbox)
   }
 </script>
 
