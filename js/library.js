@@ -1,5 +1,5 @@
 import { supabase }        from './supabase.js?v=3'
-import { initPlayer, playerOpenTrack } from './player.js?v=5'
+import { initPlayer, playerOpenTrack } from './player.js?v=6'
 
 // ─── State ────────────────────────────────────────────────────
 const state = {
@@ -377,10 +377,33 @@ function setupSelectionBar() {
   document.getElementById('selection-playlist-btn').addEventListener('click', () => {
     if (state.selected.size) window.__showAddToPlaylist?.([...state.selected])
   })
+
+  document.getElementById('selection-delete-btn').addEventListener('click', async () => {
+    const count = state.selected.size
+    if (!count) return
+    if (!confirm(`Delete ${count} track${count > 1 ? 's' : ''}? This cannot be undone.`)) return
+    await deleteSelectedTracks()
+  })
+
   document.getElementById('selection-clear-btn').addEventListener('click', () => {
     state.selected.clear()
     render()
   })
+}
+
+async function deleteSelectedTracks() {
+  const ids    = [...state.selected]
+  const tracks = ids.map(id => state.allTracks.find(t => t.id === id)).filter(Boolean)
+  const paths  = tracks.map(t => t.storage_path)
+
+  if (paths.length) await supabase.storage.from('tracks').remove(paths)
+
+  const { error } = await supabase.from('tracks').delete().in('id', ids)
+  if (error) { showError(error.message); return }
+
+  state.allTracks = state.allTracks.filter(t => !ids.includes(t.id))
+  state.selected.clear()
+  render()
 }
 
 function updateSelectionBar() {

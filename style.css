@@ -982,6 +982,20 @@ html, body {
 }
 .btn-selection-action:hover { background: var(--accent-h) }
 
+.btn-selection-danger {
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.btn-selection-danger:hover { background: var(--danger); color: #fff }
+
 .btn-selection-clear {
   background: none;
   border: 1px solid var(--border);
@@ -1520,8 +1534,9 @@ html, body {
   align-items: center;
   gap: 6px;
   flex-shrink: 1;
-  width: 200px;
-  min-width: 140px;
+  width: 190px;
+  min-width: 120px;
+  overflow: hidden;   /* prevents internal content overflowing onto collapse btn */
 }
 
 .pitch-range-cycle {
@@ -1590,37 +1605,35 @@ html, body {
   cursor: pointer;
 }
 
-.pitch-pct-label {
-  font-size: 11px;
-  color: var(--text-2);
-  font-variant-numeric: tabular-nums;
-  width: 38px;
-  text-align: right;
-  flex-shrink: 0;
-  transition: color .15s;
-}
-
-.pitch-pct-label.pitch-label--active {
-  color: var(--accent);
-  font-weight: 500;
-}
-
+/* Reset button is also the value display — no separate label needed */
 .pitch-reset-btn {
-  background: none;
-  border: none;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   color: var(--text-2);
-  font-size: 14px;
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
   cursor: pointer;
-  padding: 2px 4px;
+  padding: 2px 6px;
   border-radius: 4px;
-  line-height: 1;
   flex-shrink: 0;
-  transition: color .12s, background .12s;
+  min-width: 36px;
+  text-align: center;
+  white-space: nowrap;
+  transition: color .12s, border-color .12s, background .12s;
 }
-
 .pitch-reset-btn:hover {
   color: var(--text);
-  background: var(--surface-2);
+  border-color: var(--text-2);
+}
+.pitch-reset-btn.pitch-reset--active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+}
+.pitch-reset-btn.pitch-reset--active:hover {
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface-2));
 }
 
 /* ─── Playing row highlight ─────────────────────────────────── */

@@ -254,25 +254,25 @@ function resetPitch() {
 }
 
 function setPitchFill(pct) {
-  const slider   = document.getElementById('pitch-slider')
-  const label    = document.getElementById('pitch-pct-label')
-  const min      = parseFloat(slider.min)   // -8
-  const max      = parseFloat(slider.max)   //  8
-  const range    = max - min
+  const slider = document.getElementById('pitch-slider')
+  const btn    = document.getElementById('pitch-reset-btn')
+  const min    = parseFloat(slider.min)
+  const max    = parseFloat(slider.max)
+  const range  = max - min
 
-  // % position of center (0) and current value in the slider track
   const centerPct = ((0 - min) / range) * 100
   const valuePct  = ((pct - min) / range) * 100
-
   const left  = Math.min(centerPct, valuePct)
   const right = 100 - Math.max(centerPct, valuePct)
 
   slider.style.setProperty('--fill-left',  `${left}%`)
   slider.style.setProperty('--fill-right', `${right}%`)
 
-  const sign  = pct > 0 ? '+' : ''
-  label.textContent = pct === 0 ? '0%' : `${sign}${pct.toFixed(1)}%`
-  label.classList.toggle('pitch-label--active', pct !== 0)
+  // Reset button doubles as value display — no decimal for |pct| >= 10
+  const sign = pct > 0 ? '+' : ''
+  const dec  = Math.abs(pct) >= 10 ? 0 : 1
+  btn.textContent = pct === 0 ? '0%' : `${sign}${pct.toFixed(dec)}%`
+  btn.classList.toggle('pitch-reset--active', pct !== 0)
 }
 
 function updateBpmDisplay() {
