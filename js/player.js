@@ -36,6 +36,12 @@ export function initPlayer(neighborsCallback) {
   audio.addEventListener('loadedmetadata', () => {
     setTimeDisplay(0, audio.duration)
   })
+
+  // Redraw waveform when the theme changes (catches paused state too)
+  new MutationObserver(() => {
+    const progress = audio.duration ? audio.currentTime / audio.duration : 0
+    drawWaveform(progress)
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
 }
 
 // ─── Open a track ─────────────────────────────────────────────
@@ -131,6 +137,10 @@ function onTimeUpdate() {
 }
 
 // ─── Waveform canvas ─────────────────────────────────────────
+function themeColor(prop) {
+  return getComputedStyle(document.documentElement).getPropertyValue(prop).trim()
+}
+
 function drawWaveform(progress) {
   const canvas = document.getElementById('player-waveform')
   const ctx    = canvas.getContext('2d')
@@ -141,30 +151,33 @@ function drawWaveform(progress) {
   canvas.width  = W
   canvas.height = H
 
+  const colorPlayed   = themeColor('--accent')
+  const colorUnplayed = themeColor('--border')
+  const colorPlayhead = themeColor('--accent-h')
+
   if (!waveform.length) {
-    // Empty state
-    ctx.fillStyle = 'var(--border)'
+    ctx.fillStyle = colorUnplayed
     ctx.fillRect(0, H / 2 - 1, W, 2)
     return
   }
 
-  const n        = waveform.length
-  const barW     = W / n
-  const progX    = progress * W
-  const midY     = H / 2
+  const n     = waveform.length
+  const barW  = W / n
+  const progX = progress * W
+  const midY  = H / 2
 
   for (let i = 0; i < n; i++) {
     const x   = i * barW
     const amp = waveform[i]
     const h   = Math.max(2, amp * H * 0.85)
 
-    ctx.fillStyle = x < progX ? '#7c6af7' : '#2e2e38'
+    ctx.fillStyle = x < progX ? colorPlayed : colorUnplayed
     ctx.fillRect(x + 0.5, midY - h / 2, Math.max(1, barW - 1), h)
   }
 
   // Playhead line
   if (progress > 0) {
-    ctx.fillStyle = '#c4beff'
+    ctx.fillStyle = colorPlayhead
     ctx.fillRect(progX - 1, 0, 2, H)
   }
 }
