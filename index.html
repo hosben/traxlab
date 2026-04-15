@@ -205,14 +205,16 @@
 
   <!-- Pitch control -->
   <div class="pitch-wrap">
-    <span class="pitch-label-head">Pitch</span>
+    <button id="pitch-range-btn" class="pitch-range-cycle" title="Cycle pitch range">±6%</button>
     <input id="pitch-slider" class="pitch-slider" type="range"
-           min="-8" max="8" step="0.1" value="0" title="Double-click to reset" />
+           min="-6" max="6" step="0.1" value="0" title="Double-click to reset" />
     <span id="pitch-pct-label" class="pitch-pct-label">0%</span>
     <button id="pitch-reset-btn" class="pitch-reset-btn" title="Reset pitch">↺</button>
   </div>
 
-  <button id="player-close-btn" class="player-close" title="Close player">×</button>
+  <button id="player-collapse-btn" class="player-collapse" title="Collapse player">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7.5L10 12.5L15 7.5"/></svg>
+  </button>
 </div>
 
 <!-- ── Analysis mode modal ───────────────────────────────────── -->

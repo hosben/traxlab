@@ -1333,11 +1333,6 @@ html, body {
   z-index: 50;
 }
 
-/* Push main content up when player is visible */
-#app-screen.has-player .app-body {
-  padding-bottom: 72px;
-}
-
 .player-info {
   display: flex;
   flex-direction: column;
@@ -1424,18 +1419,33 @@ html, body {
   display: block;
 }
 
-.player-close {
+.player-collapse {
   background: none;
   border: none;
   color: var(--text-2);
-  font-size: 20px;
   cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 4px;
+  padding: 4px;
+  border-radius: 6px;
   flex-shrink: 0;
-  transition: color .12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color .12s, background .12s;
 }
-.player-close:hover { color: var(--text) }
+.player-collapse svg { width: 16px; height: 16px }
+.player-collapse:hover { color: var(--text); background: var(--surface-2) }
+
+/* ─── Player collapsed state ────────────────────────────────── */
+.player-panel.collapsed {
+  height: 48px;
+}
+.player-panel.collapsed .player-timeline,
+.player-panel.collapsed .pitch-wrap {
+  display: none;
+}
+#app-screen.has-player .app-body {
+  padding-bottom: 72px;
+}
 
 /* ─── Pitch control ─────────────────────────────────────────── */
 .pitch-wrap {
@@ -1443,15 +1453,27 @@ html, body {
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-  width: 160px;
+  width: 200px;
 }
 
-.pitch-label-head {
-  font-size: 10px;
+.pitch-range-cycle {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   color: var(--text-2);
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
   flex-shrink: 0;
+  transition: color .12s, border-color .12s, background .12s;
+  white-space: nowrap;
+}
+.pitch-range-cycle:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
 }
 
 /* Custom range slider */

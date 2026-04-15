@@ -5,7 +5,11 @@ let audio        = new Audio()
 let currentTrack = null
 let waveform     = []
 let pitchPct     = 0
+let pitchRange   = 6        // active range in % (±6, ±10, ±16, ±100)
+let collapsed    = false
 let getNeighbors = () => ({ prev: null, next: null })
+
+const PITCH_RANGES = [6, 10, 16, 100]
 
 // ─── Init ─────────────────────────────────────────────────────
 export function initPlayer(neighborsCallback) {
@@ -14,7 +18,7 @@ export function initPlayer(neighborsCallback) {
   document.getElementById('player-play-pause').addEventListener('click', togglePlay)
   document.getElementById('player-prev').addEventListener('click', playPrev)
   document.getElementById('player-next').addEventListener('click', playNext)
-  document.getElementById('player-close-btn').addEventListener('click', closePlayer)
+  document.getElementById('player-collapse-btn').addEventListener('click', toggleCollapse)
   document.getElementById('player-waveform').addEventListener('click', seekByClick)
 
   // Pitch slider
@@ -22,6 +26,7 @@ export function initPlayer(neighborsCallback) {
   slider.addEventListener('input', () => applyPitch(parseFloat(slider.value)))
   slider.addEventListener('dblclick', resetPitch)
   document.getElementById('pitch-reset-btn').addEventListener('click', resetPitch)
+  document.getElementById('pitch-range-btn').addEventListener('click', cycleRange)
 
   // Init fill at 0
   setPitchFill(0)
@@ -93,14 +98,14 @@ function playNext() {
   if (next) openTrack(next)
 }
 
-function closePlayer() {
-  audio.pause()
-  audio.src = ''
-  currentTrack = null
-  resetPitch()
-  document.getElementById('player-panel').classList.add('hidden')
-  document.getElementById('app-screen').classList.remove('has-player')
-  setActiveRow(null)
+function toggleCollapse() {
+  collapsed = !collapsed
+  const panel = document.getElementById('player-panel')
+  panel.classList.toggle('collapsed', collapsed)
+  const btn = document.getElementById('player-collapse-btn')
+  btn.innerHTML = collapsed
+    ? `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5L10 7.5L15 12.5"/></svg>`
+    : `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7.5L10 12.5L15 7.5"/></svg>`
 }
 
 function onEnded() {
@@ -189,6 +194,27 @@ function formatTime(s) {
 }
 
 // ─── Pitch ────────────────────────────────────────────────────
+function cycleRange() {
+  const idx = PITCH_RANGES.indexOf(pitchRange)
+  pitchRange = PITCH_RANGES[(idx + 1) % PITCH_RANGES.length]
+
+  const slider = document.getElementById('pitch-slider')
+  slider.min = -pitchRange
+  slider.max =  pitchRange
+
+  // Clamp and re-apply if out of new range
+  const clamped = Math.max(-pitchRange, Math.min(pitchRange, pitchPct))
+  if (clamped !== pitchPct) {
+    slider.value = clamped
+    applyPitch(clamped)
+  } else {
+    setPitchFill(pitchPct)
+  }
+
+  const label = pitchRange === 100 ? 'WIDE' : `±${pitchRange}%`
+  document.getElementById('pitch-range-btn').textContent = label
+}
+
 function applyPitch(pct) {
   pitchPct = pct
   audio.playbackRate = 1 + pct / 100
