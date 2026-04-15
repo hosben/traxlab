@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=13" />
+  <link rel="stylesheet" href="style.css?v=14" />
 </head>
 <body>
 
@@ -213,7 +213,15 @@
     </button>
   </div>
 
-  <!-- Zone 3 · Timeline (elastic) -->
+  <!-- Zone 3 · Pitch -->
+  <div class="pitch-wrap">
+    <button id="pitch-range-btn" class="pitch-range-cycle" title="Cycle pitch range">±6%</button>
+    <input id="pitch-slider" class="pitch-slider" type="range"
+           min="-6" max="6" step="0.1" value="0" title="Double-click to reset" />
+    <button id="pitch-reset-btn" class="pitch-reset-btn" title="Click to reset pitch">0%</button>
+  </div>
+
+  <!-- Zone 4 · Timeline (elastic) -->
   <div class="player-timeline">
     <span id="player-time" class="player-time">0:00</span>
     <canvas id="player-waveform" class="player-waveform"></canvas>
@@ -226,14 +234,6 @@
     <div id="player-progress-strip" class="player-progress-strip">
       <div id="player-progress-fill" class="player-progress-fill"></div>
     </div>
-  </div>
-
-  <!-- Zone 4 · Pitch -->
-  <div class="pitch-wrap">
-    <button id="pitch-range-btn" class="pitch-range-cycle" title="Cycle pitch range">±6%</button>
-    <input id="pitch-slider" class="pitch-slider" type="range"
-           min="-6" max="6" step="0.1" value="0" title="Double-click to reset" />
-    <button id="pitch-reset-btn" class="pitch-reset-btn" title="Click to reset pitch">0%</button>
   </div>
 
   <!-- Zone 5 · Collapse -->

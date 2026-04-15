@@ -1487,7 +1487,7 @@ html, body {
 .player-btn-main svg { width: 18px; height: 18px }
 .player-btn-main:hover { background: var(--accent-h); color: #fff }
 
-/* ── Zone 3 · Timeline (elastic) ── */
+/* ── Zone 4 · Timeline (elastic) ── */
 .player-timeline {
   flex: 1;
   display: flex;
@@ -1495,7 +1495,6 @@ html, body {
   gap: 10px;
   min-width: 100px;
   padding: 0 16px;
-  border-left: 1px solid var(--border);
   border-right: 1px solid var(--border);
   height: 100%;
 }
@@ -1517,14 +1516,15 @@ html, body {
   display: block;
 }
 
-/* ── Zone 4 · Pitch ── */
+/* ── Zone 3 · Pitch ── */
 .pitch-wrap {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
-  width: 190px;
+  width: 162px;
   padding: 0 16px;
+  border-right: 1px solid var(--border);
 }
 
 /* ── Zone 5 · Collapse ── */
