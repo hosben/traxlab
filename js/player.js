@@ -60,9 +60,18 @@ export async function openTrack(track) {
   const displayName = track.title || track.filename
   document.getElementById('player-name').textContent      = displayName
   document.getElementById('player-mini-name').textContent = displayName
+  document.getElementById('player-artist').textContent = track.artist ?? ''
   document.getElementById('player-bpm').textContent   = track.bpm  ? `${Number(track.bpm).toFixed(1)} BPM` : ''
   document.getElementById('player-key').textContent   = track.key  ?? ''
   setTimeDisplay(0, track.duration_seconds || 0)
+
+  // Artwork thumbnail
+  const artEl = document.getElementById('player-artwork')
+  if (track.artwork) {
+    artEl.innerHTML = `<img src="${track.artwork}" alt="artwork">`
+  } else {
+    artEl.innerHTML = `<svg class="player-art-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M18 3a1 1 0 0 0-1.196-.98l-10 2A1 1 0 0 0 6 5v9.114A4.369 4.369 0 0 0 5 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0 0 15 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/></svg>`
+  }
   drawWaveform(0)
 
   // Reveal player
