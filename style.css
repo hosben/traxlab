@@ -596,6 +596,21 @@ html, body {
 .queue-progress-bar--done::after,
 .queue-progress-bar--error::after { display: none }
 
+.queue-error-dismiss {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+  margin-left: 6px;
+  flex-shrink: 0;
+  opacity: .7;
+  transition: opacity .12s;
+}
+.queue-error-dismiss:hover { opacity: 1 }
+
 /* ─── Library error ────────────────────────────────────────── */
 .library-error {
   font-size: 13px;

@@ -187,12 +187,18 @@ function setItemStatus(el, status, msg, pct) {
   } else if (status === 'error') {
     statusEl.textContent  = msg || 'Error'
     statusEl.className    = 'queue-status error'
+    statusEl.title        = msg || 'Error'   // full message on hover
     if (barEl) { barEl.style.width = '100%'; barEl.classList.add('queue-progress-bar--error') }
-    setTimeout(() => {
+    // Errors stay visible until the user dismisses them
+    const dismiss = document.createElement('button')
+    dismiss.className   = 'queue-error-dismiss'
+    dismiss.textContent = '×'
+    dismiss.addEventListener('click', () => {
       el.remove()
       const queue = document.getElementById('upload-queue')
       if (!queue.children.length) queue.classList.add('hidden')
-    }, 5000)
+    })
+    el.querySelector('.queue-item-row').appendChild(dismiss)
   } else {
     const pctText = pct != null ? ` ${pct}%` : ''
     statusEl.textContent = (msg || '…') + pctText
