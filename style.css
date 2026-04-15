@@ -1568,38 +1568,26 @@ html, body {
 /* ── 4 · Volume ── */
 .player-volume {
   flex-shrink: 0;
-  width: 120px;
+  width: 40px;
   height: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  border-right: 1px solid var(--border);
-}
-
-.player-volume-icon {
-  flex-shrink: 0;
-  background: none;
-  border: none;
-  color: var(--text-2);
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  transition: color .12s;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
 }
-.player-volume-icon:hover { color: var(--text); }
-.player-volume-icon svg { width: 16px; height: 16px; pointer-events: none; }
 
+/* Vertical slider: rotate a 44px horizontal track */
 .volume-slider {
   -webkit-appearance: none;
   appearance: none;
-  flex: 1;
+  width: 44px;
   height: 4px;
   border-radius: 2px;
   cursor: pointer;
   outline: none;
+  transform: rotate(-90deg);
+  flex-shrink: 0;
   background: linear-gradient(
     to right,
     var(--accent) 0%,

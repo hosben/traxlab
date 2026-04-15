@@ -9,7 +9,6 @@ let pitchRange   = 6        // active range in % (±6, ±10, ±16, ±100)
 let collapsed    = false
 let timeMode     = 'elapsed' // 'elapsed' | 'remaining' | 'total'
 let volumePct    = 100       // 0–100
-let muted        = false
 let getNeighbors = () => ({ prev: null, next: null })
 
 const PITCH_RANGES = [6, 10, 16, 100]
@@ -28,7 +27,6 @@ export function initPlayer(neighborsCallback) {
   // Volume
   const volSlider = document.getElementById('volume-slider')
   volSlider.addEventListener('input', () => applyVolume(parseInt(volSlider.value)))
-  document.getElementById('player-mute-btn').addEventListener('click', toggleMute)
   applyVolume(100)
 
   // Pitch slider
@@ -321,28 +319,10 @@ function updateBpmDisplay() {
 // ─── Volume ───────────────────────────────────────────────────
 function applyVolume(pct) {
   volumePct = pct
-  muted = pct === 0
   audio.volume = pct / 100
   const slider = document.getElementById('volume-slider')
   slider.value = pct
   slider.style.setProperty('--vol-pct', `${pct}%`)
-  updateVolIcon(pct)
-}
-
-function toggleMute() {
-  if (muted) {
-    applyVolume(volumePct > 0 ? volumePct : 80)
-  } else {
-    const prev = volumePct
-    applyVolume(0)
-    volumePct = prev   // remember level to restore
-  }
-}
-
-function updateVolIcon(pct) {
-  document.getElementById('vol-icon-high').hidden = pct === 0 || pct < 50
-  document.getElementById('vol-icon-low').hidden  = pct === 0 || pct >= 50
-  document.getElementById('vol-icon-mute').hidden = pct > 0
 }
 
 // ─── Expose for library.js ────────────────────────────────────
