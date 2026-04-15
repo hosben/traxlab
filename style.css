@@ -1565,7 +1565,71 @@ html, body {
   display: block;
 }
 
-/* ── 4 · Time toggle ── */
+/* ── 4 · Volume ── */
+.player-volume {
+  flex-shrink: 0;
+  width: 120px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-right: 1px solid var(--border);
+}
+
+.player-volume-icon {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-2);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color .12s;
+}
+.player-volume-icon:hover { color: var(--text); }
+.player-volume-icon svg { width: 16px; height: 16px; pointer-events: none; }
+
+.volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  cursor: pointer;
+  outline: none;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0%,
+    var(--accent) var(--vol-pct, 100%),
+    var(--border)  var(--vol-pct, 100%),
+    var(--border)  100%
+  );
+}
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--accent);
+  transition: transform .1s;
+}
+.volume-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+.volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--accent);
+  cursor: pointer;
+}
+
+/* ── 5 · Time toggle ── */
 .player-time-toggle {
   flex-shrink: 0;
   width: 62px;
@@ -1707,6 +1771,7 @@ html, body {
 .player-panel.collapsed .player-info,
 .player-panel.collapsed .player-play-zone,
 .player-panel.collapsed .player-timeline,
+.player-panel.collapsed .player-volume,
 .player-panel.collapsed .player-time-toggle,
 .player-panel.collapsed .pitch-wrap {
   display: none;
