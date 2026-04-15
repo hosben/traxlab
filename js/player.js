@@ -7,20 +7,21 @@ let waveform     = []
 let pitchPct     = 0
 let pitchRange   = 6        // active range in % (±6, ±10, ±16, ±100)
 let collapsed    = false
+let timeMode     = 'elapsed' // 'elapsed' | 'remaining' | 'total'
 let getNeighbors = () => ({ prev: null, next: null })
 
 const PITCH_RANGES = [6, 10, 16, 100]
+const PITCH_STEP   = 0.5   // % per +/− button click
 
 // ─── Init ─────────────────────────────────────────────────────
 export function initPlayer(neighborsCallback) {
   getNeighbors = neighborsCallback
 
   document.getElementById('player-play-pause').addEventListener('click', togglePlay)
-  document.getElementById('player-prev').addEventListener('click', playPrev)
-  document.getElementById('player-next').addEventListener('click', playNext)
   document.getElementById('player-collapse-btn').addEventListener('click', toggleCollapse)
   document.getElementById('player-waveform').addEventListener('click', seekByClick)
   document.getElementById('player-progress-strip').addEventListener('click', seekByMiniClick)
+  document.getElementById('player-time-toggle').addEventListener('click', cycleTimeMode)
 
   // Pitch slider
   const slider = document.getElementById('pitch-slider')
@@ -28,17 +29,16 @@ export function initPlayer(neighborsCallback) {
   slider.addEventListener('dblclick', resetPitch)
   document.getElementById('pitch-reset-btn').addEventListener('click', resetPitch)
   document.getElementById('pitch-range-btn').addEventListener('click', cycleRange)
+  document.getElementById('pitch-down-btn').addEventListener('click', () => stepPitch(-PITCH_STEP))
+  document.getElementById('pitch-up-btn').addEventListener('click',   () => stepPitch(+PITCH_STEP))
 
-  // Init fill at 0
   setPitchFill(0)
 
   audio.addEventListener('timeupdate', onTimeUpdate)
   audio.addEventListener('ended',      onEnded)
-  audio.addEventListener('loadedmetadata', () => {
-    setTimeDisplay(0, audio.duration)
-  })
+  audio.addEventListener('loadedmetadata', () => updateTimeDisplay())
 
-  // Redraw waveform when the theme changes (catches paused state too)
+  // Redraw waveform on theme change (catches paused state)
   new MutationObserver(() => {
     const progress = audio.duration ? audio.currentTime / audio.duration : 0
     drawWaveform(progress)
@@ -49,36 +49,34 @@ export function initPlayer(neighborsCallback) {
 export async function openTrack(track) {
   if (currentTrack?.id === track.id) { togglePlay(); return }
 
-  // Update active row highlight
   setActiveRow(track.id)
 
   currentTrack = track
   resetPitch()
-  waveform     = track.waveform || []
+  waveform = track.waveform || []
 
-  // UI metadata
+  // Metadata
   const displayName = track.title || track.filename
   document.getElementById('player-name').textContent      = displayName
   document.getElementById('player-mini-name').textContent = displayName
-  document.getElementById('player-artist').textContent = track.artist ?? ''
-  document.getElementById('player-bpm').textContent   = track.bpm  ? `${Number(track.bpm).toFixed(1)} BPM` : ''
-  document.getElementById('player-key').textContent   = track.key  ?? ''
-  setTimeDisplay(0, track.duration_seconds || 0)
+  document.getElementById('player-artist').textContent    = track.artist ?? ''
+  document.getElementById('player-bpm').textContent       = track.bpm ? `${Number(track.bpm).toFixed(1)} BPM` : ''
+  document.getElementById('player-key').textContent       = track.key  ?? ''
 
-  // Artwork thumbnail
+  // Artwork
   const artEl = document.getElementById('player-artwork')
   if (track.artwork) {
     artEl.innerHTML = `<img src="${track.artwork}" alt="artwork">`
   } else {
     artEl.innerHTML = `<svg class="player-art-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M18 3a1 1 0 0 0-1.196-.98l-10 2A1 1 0 0 0 6 5v9.114A4.369 4.369 0 0 0 5 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0 0 15 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/></svg>`
   }
+
+  updateTimeDisplay()
   drawWaveform(0)
 
-  // Reveal player
   document.getElementById('player-panel').classList.remove('hidden')
   document.getElementById('app-screen').classList.add('has-player')
 
-  // Fetch signed URL (valid 1h)
   setPlayIcon(false)
   const { data, error } = await supabase.storage
     .from('tracks')
@@ -104,11 +102,6 @@ function togglePlay() {
     audio.pause()
     setPlayIcon(false)
   }
-}
-
-function playPrev() {
-  const { prev } = getNeighbors(currentTrack?.id)
-  if (prev) openTrack(prev)
 }
 
 function playNext() {
@@ -147,9 +140,35 @@ function seekByMiniClick(e) {
 // ─── Progress ─────────────────────────────────────────────────
 function onTimeUpdate() {
   const progress = audio.duration ? audio.currentTime / audio.duration : 0
-  setTimeDisplay(audio.currentTime, audio.duration)
+  updateTimeDisplay()
   drawWaveform(progress)
   document.getElementById('player-progress-fill').style.width = `${progress * 100}%`
+}
+
+// ─── Time display ─────────────────────────────────────────────
+function cycleTimeMode() {
+  const modes = ['elapsed', 'remaining', 'total']
+  timeMode = modes[(modes.indexOf(timeMode) + 1) % modes.length]
+  updateTimeDisplay()
+}
+
+function updateTimeDisplay() {
+  const cur = audio.currentTime || 0
+  const dur = audio.duration || currentTrack?.duration_seconds || 0
+  const valEl  = document.getElementById('player-time')
+  const modeEl = document.getElementById('player-time-mode')
+  if (!valEl) return
+
+  if (timeMode === 'elapsed') {
+    valEl.textContent  = formatTime(cur)
+    modeEl.textContent = 'elapsed'
+  } else if (timeMode === 'remaining') {
+    valEl.textContent  = dur ? `−${formatTime(dur - cur)}` : '0:00'
+    modeEl.textContent = 'remain'
+  } else {
+    valEl.textContent  = formatTime(dur)
+    modeEl.textContent = 'total'
+  }
 }
 
 // ─── Waveform canvas ─────────────────────────────────────────
@@ -186,12 +205,10 @@ function drawWaveform(progress) {
     const x   = i * barW
     const amp = waveform[i]
     const h   = Math.max(2, amp * H * 0.85)
-
     ctx.fillStyle = x < progX ? colorPlayed : colorUnplayed
     ctx.fillRect(x + 0.5, midY - h / 2, Math.max(1, barW - 1), h)
   }
 
-  // Playhead line
   if (progress > 0) {
     ctx.fillStyle = colorPlayhead
     ctx.fillRect(progX - 1, 0, 2, H)
@@ -206,11 +223,6 @@ function setPlayIcon(playing) {
     : `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M6.3 2.84A1.5 1.5 0 0 0 4 4.11v11.78a1.5 1.5 0 0 0 2.3 1.27l9.344-5.891a1.5 1.5 0 0 0 0-2.538L6.3 2.84Z"/></svg>`
 }
 
-function setTimeDisplay(current, total) {
-  document.getElementById('player-time').textContent     = formatTime(current)
-  document.getElementById('player-duration').textContent = formatTime(total)
-}
-
 function setActiveRow(trackId) {
   document.querySelectorAll('.track-row').forEach(r => {
     r.classList.toggle('playing', r.dataset.id === trackId)
@@ -219,7 +231,7 @@ function setActiveRow(trackId) {
 
 function formatTime(s) {
   if (!s || isNaN(s)) return '0:00'
-  const m = Math.floor(s / 60)
+  const m   = Math.floor(s / 60)
   const sec = Math.floor(s % 60).toString().padStart(2, '0')
   return `${m}:${sec}`
 }
@@ -233,7 +245,6 @@ function cycleRange() {
   slider.min = -pitchRange
   slider.max =  pitchRange
 
-  // Clamp and re-apply if out of new range
   const clamped = Math.max(-pitchRange, Math.min(pitchRange, pitchPct))
   if (clamped !== pitchPct) {
     slider.value = clamped
@@ -244,6 +255,13 @@ function cycleRange() {
 
   const label = pitchRange === 100 ? 'WIDE' : `±${pitchRange}%`
   document.getElementById('pitch-range-btn').textContent = label
+}
+
+function stepPitch(delta) {
+  const slider  = document.getElementById('pitch-slider')
+  const newVal  = Math.max(-pitchRange, Math.min(pitchRange, pitchPct + delta))
+  slider.value  = newVal
+  applyPitch(newVal)
 }
 
 function applyPitch(pct) {
@@ -277,7 +295,6 @@ function setPitchFill(pct) {
   slider.style.setProperty('--fill-left',  `${left}%`)
   slider.style.setProperty('--fill-right', `${right}%`)
 
-  // Reset button doubles as value display — no decimal for |pct| >= 10
   const sign = pct > 0 ? '+' : ''
   const dec  = Math.abs(pct) >= 10 ? 0 : 1
   btn.textContent = pct === 0 ? '0%' : `${sign}${pct.toFixed(dec)}%`

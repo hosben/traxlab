@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=14" />
+  <link rel="stylesheet" href="style.css?v=15" />
 </head>
 <body>
 
@@ -183,7 +183,7 @@
 <!-- ── Player panel ───────────────────────────────────────────── -->
 <div id="player-panel" class="player-panel hidden">
 
-  <!-- Zone 1 · Track info -->
+  <!-- 1 · Track info: artwork + artist + title + bpm + key -->
   <div class="player-info">
     <div id="player-artwork" class="player-art">
       <svg class="player-art-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -200,35 +200,35 @@
     </div>
   </div>
 
-  <!-- Zone 2 · Transport -->
-  <div class="player-controls">
-    <button id="player-prev" class="player-btn" title="Previous">
-      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.712 5.166a.75.75 0 0 1 .788.066l7 5a.75.75 0 0 1 0 1.236l-7 5A.75.75 0 0 1 7.25 15.5v-2.38l-4.488 3.203A.75.75 0 0 1 1.5 15.5v-11a.75.75 0 0 1 1.262-.553L7.25 6.88V4.5a.75.75 0 0 1 .462-.834Z" transform="scale(-1,1) translate(-20,0)"/></svg>
-    </button>
-    <button id="player-play-pause" class="player-btn player-btn-main" title="Play/Pause">
+  <!-- 2 · Play/pause only -->
+  <div class="player-play-zone">
+    <button id="player-play-pause" class="player-btn-main" title="Play / Pause">
       <svg viewBox="0 0 20 20" fill="currentColor"><path d="M6.3 2.84A1.5 1.5 0 0 0 4 4.11v11.78a1.5 1.5 0 0 0 2.3 1.27l9.344-5.891a1.5 1.5 0 0 0 0-2.538L6.3 2.84Z"/></svg>
     </button>
-    <button id="player-next" class="player-btn" title="Next">
-      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.712 5.166a.75.75 0 0 1 .788.066l7 5a.75.75 0 0 1 0 1.236l-7 5A.75.75 0 0 1 7.25 15.5v-2.38l-4.488 3.203A.75.75 0 0 1 1.5 15.5v-11a.75.75 0 0 1 1.262-.553L7.25 6.88V4.5a.75.75 0 0 1 .462-.834Z"/></svg>
-    </button>
   </div>
 
-  <!-- Zone 3 · Pitch -->
-  <div class="pitch-wrap">
-    <button id="pitch-range-btn" class="pitch-range-cycle" title="Cycle pitch range">±6%</button>
-    <input id="pitch-slider" class="pitch-slider" type="range"
-           min="-6" max="6" step="0.1" value="0" title="Double-click to reset" />
-    <button id="pitch-reset-btn" class="pitch-reset-btn" title="Click to reset pitch">0%</button>
-  </div>
-
-  <!-- Zone 4 · Timeline (elastic) -->
+  <!-- 3 · Waveform + progress -->
   <div class="player-timeline">
-    <span id="player-time" class="player-time">0:00</span>
     <canvas id="player-waveform" class="player-waveform"></canvas>
-    <span id="player-duration" class="player-time">0:00</span>
   </div>
 
-  <!-- Mini collapsed view (hidden when expanded) -->
+  <!-- 4 · Time display — click to cycle elapsed / remaining / total -->
+  <button id="player-time-toggle" class="player-time-toggle" title="Click to toggle time display">
+    <span id="player-time" class="player-time-val">0:00</span>
+    <span id="player-time-mode" class="player-time-mode">elapsed</span>
+  </button>
+
+  <!-- 5 · Pitch: range + step − + slider + step + + value/reset -->
+  <div class="pitch-wrap">
+    <button id="pitch-range-btn"  class="pitch-range-cycle" title="Cycle pitch range">±6%</button>
+    <button id="pitch-down-btn"   class="pitch-step-btn"    title="Decrease tempo">−</button>
+    <input  id="pitch-slider"     class="pitch-slider" type="range"
+            min="-6" max="6" step="0.1" value="0" title="Double-click to reset" />
+    <button id="pitch-up-btn"     class="pitch-step-btn"    title="Increase tempo">+</button>
+    <button id="pitch-reset-btn"  class="pitch-reset-btn"   title="Click to reset pitch">0%</button>
+  </div>
+
+  <!-- Mini view (collapsed only) -->
   <div class="player-mini">
     <span id="player-mini-name" class="player-mini-name"></span>
     <div id="player-progress-strip" class="player-progress-strip">
@@ -236,7 +236,7 @@
     </div>
   </div>
 
-  <!-- Zone 5 · Collapse -->
+  <!-- 6 · Collapse — always visible -->
   <button id="player-collapse-btn" class="player-collapse" title="Collapse player">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7.5L10 12.5L15 7.5"/></svg>
   </button>
@@ -287,7 +287,7 @@
 <script type="module">
   import { initAuth, signOut }               from './js/auth.js?v=3'
   import { initUpload }                      from './js/upload.js?v=5'
-  import { initLibrary, addTrackToList }     from './js/library.js?v=7'
+  import { initLibrary, addTrackToList }     from './js/library.js?v=8'
   import { initPlaylists }                   from './js/playlists.js?v=3'
   import { exportRekordbox }                 from './js/exporter.js?v=3'
   import { initDevices }                     from './js/devices.js?v=3'

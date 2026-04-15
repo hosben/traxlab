@@ -1,5 +1,5 @@
 import { supabase }        from './supabase.js?v=3'
-import { initPlayer, playerOpenTrack } from './player.js?v=7'
+import { initPlayer, playerOpenTrack } from './player.js?v=8'
 
 // ─── State ────────────────────────────────────────────────────
 const state = {
