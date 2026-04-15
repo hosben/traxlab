@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=15" />
+  <link rel="stylesheet" href="style.css?v=16" />
 </head>
 <body>
 
@@ -218,14 +218,18 @@
     <span id="player-time-mode" class="player-time-mode">elapsed</span>
   </button>
 
-  <!-- 5 · Pitch: range + step − + slider + step + + value/reset -->
+  <!-- 5 · Pitch -->
   <div class="pitch-wrap">
-    <button id="pitch-range-btn"  class="pitch-range-cycle" title="Cycle pitch range">±6%</button>
-    <button id="pitch-down-btn"   class="pitch-step-btn"    title="Decrease tempo">−</button>
-    <input  id="pitch-slider"     class="pitch-slider" type="range"
-            min="-6" max="6" step="0.1" value="0" title="Double-click to reset" />
-    <button id="pitch-up-btn"     class="pitch-step-btn"    title="Increase tempo">+</button>
-    <button id="pitch-reset-btn"  class="pitch-reset-btn"   title="Click to reset pitch">0%</button>
+    <div class="pitch-header">
+      <button id="pitch-range-btn" class="pitch-range-cycle" title="Cycle pitch range">±6%</button>
+      <button id="pitch-reset-btn" class="pitch-reset-btn"   title="Click to reset pitch">0%</button>
+    </div>
+    <div class="pitch-row">
+      <button id="pitch-down-btn" class="pitch-step-btn" title="Decrease tempo">−</button>
+      <input  id="pitch-slider"   class="pitch-slider" type="range"
+              min="-6" max="6" step="0.1" value="0" title="Double-click to reset" />
+      <button id="pitch-up-btn"   class="pitch-step-btn" title="Increase tempo">+</button>
+    </div>
   </div>
 
   <!-- Mini view (collapsed only) -->
