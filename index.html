@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=6" />
+  <link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
 
@@ -204,6 +204,36 @@
   </div>
 
   <button id="player-close-btn" class="player-close" title="Close player">×</button>
+</div>
+
+<!-- ── Analysis mode modal ───────────────────────────────────── -->
+<div id="analysis-mode-modal" class="modal-overlay hidden">
+  <div class="modal-card analysis-mode-card">
+    <div class="modal-header">
+      <h3>BPM Analysis</h3>
+    </div>
+    <p class="analysis-intro">Choose how BPM will be detected for your tracks.</p>
+    <div class="analysis-options">
+
+      <label class="analysis-opt">
+        <input type="radio" name="analysis-mode" value="normal" checked />
+        <div class="analysis-opt-body">
+          <span class="analysis-opt-title">Normal</span>
+          <span class="analysis-opt-desc">Single pass · Fast · Ideal for most tracks</span>
+        </div>
+      </label>
+
+      <label class="analysis-opt">
+        <input type="radio" name="analysis-mode" value="dynamic" />
+        <div class="analysis-opt-body">
+          <span class="analysis-opt-title">Dynamic</span>
+          <span class="analysis-opt-desc">5 windows across the track · Median BPM · More accurate for complex tracks · Slower</span>
+        </div>
+      </label>
+
+    </div>
+    <button id="analysis-start-btn" class="btn-primary">Analyze</button>
+  </div>
 </div>
 
 <!-- ── Add to playlist modal ─────────────────────────────────── -->

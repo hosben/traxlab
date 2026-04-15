@@ -3,17 +3,17 @@
 // Key: Goertzel chroma → Krumhansl-Schmuckler correlation
 // Waveform: RMS per block, normalised to 0-1
 
-const WAVEFORM_POINTS  = 200
-const MAX_BPM_DURATION = 60   // seconds used for BPM analysis
-const MAX_KEY_DURATION = 30   // seconds used for key analysis
-const KEY_SAMPLE_RATE  = 8000 // downsample target for key (saves CPU)
+const WAVEFORM_POINTS      = 200
+const MAX_BPM_DURATION     = 60   // seconds — normal mode
+const MAX_BPM_DURATION_DYN = 90   // seconds — dynamic mode (more data)
+const MAX_KEY_DURATION     = 30
+const KEY_SAMPLE_RATE      = 8000
 
 // ─── Public API ──────────────────────────────────────────────
-// arrayBuffer: ArrayBuffer (already read by caller)
-export async function analyzeAudio(arrayBuffer, onProgress) {
+// mode: 'normal' | 'dynamic'
+export async function analyzeAudio(arrayBuffer, onProgress, mode = 'normal') {
   onProgress?.('Decoding…', 10)
 
-  // slice() creates a copy — decodeAudioData transfers (detaches) the buffer
   const audioBuffer = await new Promise((resolve, reject) => {
     const ctx = new AudioContext()
     ctx.decodeAudioData(
@@ -28,13 +28,13 @@ export async function analyzeAudio(arrayBuffer, onProgress) {
 
   onProgress?.('Waveform…', 35)
   const waveform = extractWaveform(audioBuffer)
-  console.log('[Traxlab] Waveform points:', waveform.length)
 
-  onProgress?.('BPM…', 50)
-  const bpm = await detectBPM(audioBuffer)
-  console.log('[Traxlab] BPM:', bpm)
+  const bpmLabel = mode === 'dynamic' ? 'BPM (dynamic)…' : 'BPM…'
+  onProgress?.(bpmLabel, 50)
+  const bpm = await detectBPM(audioBuffer, mode)
+  console.log('[Traxlab] BPM:', bpm, `(${mode})`)
 
-  onProgress?.('Key…', 80)
+  onProgress?.('Key…', 82)
   const key = detectKey(audioBuffer)
   console.log('[Traxlab] Key:', key)
 
@@ -59,9 +59,10 @@ function extractWaveform(audioBuffer) {
 }
 
 // ─── BPM ──────────────────────────────────────────────────────
-async function detectBPM(audioBuffer) {
-  const sr         = audioBuffer.sampleRate
-  const maxSamples = Math.floor(Math.min(audioBuffer.duration, MAX_BPM_DURATION) * sr)
+async function detectBPM(audioBuffer, mode = 'normal') {
+  const sr          = audioBuffer.sampleRate
+  const cap         = mode === 'dynamic' ? MAX_BPM_DURATION_DYN : MAX_BPM_DURATION
+  const maxSamples  = Math.floor(Math.min(audioBuffer.duration, cap) * sr)
 
   // Lowpass at 150 Hz to isolate kick/bass
   const offCtx = new OfflineAudioContext(1, maxSamples, sr)
@@ -81,7 +82,8 @@ async function detectBPM(audioBuffer) {
   const data     = filtered.getChannelData(0)
 
   // RMS energy per 10 ms frame
-  const frameSize = Math.floor(sr * 0.01)
+  const fps       = 100
+  const frameSize = Math.floor(sr / fps)
   const numFrames = Math.floor(data.length / frameSize)
   const energy    = new Float32Array(numFrames)
 
@@ -92,19 +94,24 @@ async function detectBPM(audioBuffer) {
     energy[i] = Math.sqrt(e / frameSize)
   }
 
-  // Log-compressed onset strength — equalises weak and strong beats so
-  // quieter hits aren't ignored and loud kicks don't dominate.
+  // Log-compressed onset strength
   const onsets = new Float32Array(numFrames)
   for (let i = 1; i < numFrames; i++) {
     const diff = Math.log1p(energy[i] * 1000) - Math.log1p(energy[i - 1] * 1000)
     onsets[i]  = Math.max(0, diff)
   }
 
-  // Autocorrelation over 60–200 BPM
-  const fps    = 100  // frames per second (1 / 0.01)
-  const minLag = Math.floor(fps * 60 / 200)   // 30 → 200 BPM
-  const maxLag = Math.floor(fps * 60 / 60)    // 100 → 60 BPM
+  return mode === 'dynamic'
+    ? bpmDynamic(onsets, fps)
+    : bpmNormal(onsets, fps)
+}
 
+// ─── Shared autocorrelation helpers ───────────────────────────
+const FPS     = 100
+const MIN_LAG = Math.floor(FPS * 60 / 200)  // 30 → 200 BPM
+const MAX_LAG = Math.floor(FPS * 60 / 60)   // 100 → 60 BPM
+
+function computeAC(onsets, minLag, maxLag) {
   const ac = new Float32Array(maxLag + 1)
   for (let lag = minLag; lag <= maxLag; lag++) {
     let c = 0
@@ -112,12 +119,12 @@ async function detectBPM(audioBuffer) {
     for (let i = 0; i < n; i++) c += onsets[i] * onsets[i + lag]
     ac[lag] = c
   }
+  return ac
+}
 
-  // Harmonic-weighted score: for each candidate lag, also add the
-  // correlation at 2× and 3× that lag (the sub-harmonics).
-  // A true beat period shows up strongly at *all* its multiples, while
-  // a half-tempo false positive only scores well at its own lag.
-  // This directly fixes the common "128 BPM detected as 64 BPM" problem.
+// Harmonic-weighted lag selection: rewards lags whose multiples (2×, 3×)
+// also have high correlation — the true beat period, not a sub-harmonic.
+function bestLag(ac, minLag, maxLag) {
   const scores = new Float32Array(maxLag + 1)
   for (let lag = minLag; lag <= maxLag; lag++) {
     let s = ac[lag]
@@ -125,13 +132,46 @@ async function detectBPM(audioBuffer) {
     if (lag * 3 <= maxLag) s += 0.25 * ac[lag * 3]
     scores[lag] = s
   }
-
-  let bestLag = minLag
+  let best = minLag
   for (let lag = minLag + 1; lag <= maxLag; lag++) {
-    if (scores[lag] > scores[bestLag]) bestLag = lag
+    if (scores[lag] > scores[best]) best = lag
   }
+  return best
+}
 
-  return Math.round((60 / (bestLag / fps)) * 10) / 10
+function lagToBPM(lag, fps) {
+  return Math.round((60 / (lag / fps)) * 10) / 10
+}
+
+// ─── Normal mode: single pass over full analysis window ────────
+function bpmNormal(onsets, fps) {
+  const ac  = computeAC(onsets, MIN_LAG, MAX_LAG)
+  return lagToBPM(bestLag(ac, MIN_LAG, MAX_LAG), fps)
+}
+
+// ─── Dynamic mode: 5 windows spread across the track, median BPM
+// Skips intros/outros; outlier windows are cancelled out by the median.
+function bpmDynamic(onsets, fps) {
+  const n          = onsets.length
+  const winFrames  = fps * 15  // 15-second windows
+  const positions  = [0.20, 0.35, 0.50, 0.65, 0.80]
+
+  const bpms = positions
+    .map(pos => {
+      const start = Math.floor(n * pos)
+      const end   = Math.min(start + winFrames, n)
+      if (end - start < fps * 8) return null  // too short
+      const win = onsets.slice(start, end)
+      const ac  = computeAC(win, MIN_LAG, MAX_LAG)
+      return lagToBPM(bestLag(ac, MIN_LAG, MAX_LAG), fps)
+    })
+    .filter(Boolean)
+    .sort((a, b) => a - b)
+
+  if (!bpms.length) return bpmNormal(onsets, fps)  // fallback
+
+  // Median
+  return bpms[Math.floor(bpms.length / 2)]
 }
 
 // ─── Key (Krumhansl-Schmuckler) ───────────────────────────────

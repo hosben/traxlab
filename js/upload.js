@@ -1,5 +1,5 @@
 import { supabase }       from './supabase.js?v=3'
-import { analyzeAudio }  from './analyzer.js?v=4'
+import { analyzeAudio }  from './analyzer.js?v=5'
 import { extractArtwork } from './artwork.js?v=1'
 
 const ACCEPTED_TYPES = [
@@ -44,11 +44,37 @@ async function handleFiles(files, onTrackAdded) {
     showGlobalError('Accepted formats: WAV, AIFF, MP3, FLAC, OGG.')
     return
   }
-  await Promise.all(valid.map(file => uploadFile(file, onTrackAdded)))
+  const mode = await askAnalysisMode()
+  await Promise.all(valid.map(file => uploadFile(file, onTrackAdded, mode)))
+}
+
+// ─── Analysis mode dialog ────────────────────────────────────
+function askAnalysisMode() {
+  return new Promise(resolve => {
+    const modal   = document.getElementById('analysis-mode-modal')
+    const startBtn = document.getElementById('analysis-start-btn')
+
+    // Pre-select last used mode
+    const saved = localStorage.getItem('traxlab_analysis_mode') || 'normal'
+    const radio = modal.querySelector(`input[value="${saved}"]`)
+    if (radio) radio.checked = true
+
+    modal.classList.remove('hidden')
+
+    const confirm = () => {
+      const mode = modal.querySelector('input[name="analysis-mode"]:checked')?.value || 'normal'
+      localStorage.setItem('traxlab_analysis_mode', mode)
+      modal.classList.add('hidden')
+      startBtn.removeEventListener('click', confirm)
+      resolve(mode)
+    }
+
+    startBtn.addEventListener('click', confirm)
+  })
 }
 
 // ─── Single file ─────────────────────────────────────────────
-async function uploadFile(file, onTrackAdded) {
+async function uploadFile(file, onTrackAdded, mode = 'normal') {
   console.log('[Traxlab] uploadFile:', file.name, file.size)
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -77,7 +103,7 @@ async function uploadFile(file, onTrackAdded) {
 
   const [uploadResult, analysis, artwork] = await Promise.all([
     supabase.storage.from('tracks').upload(storagePath, blob, { upsert: false }),
-    analyzeAudio(arrayBuffer, (msg, pct) => setItemStatus(itemEl, 'progress', msg, pct))
+    analyzeAudio(arrayBuffer, (msg, pct) => setItemStatus(itemEl, 'progress', msg, pct), mode)
       .catch(err => { console.error('[Traxlab] analysis error:', err); return null }),
     extractArtwork(arrayBuffer).catch(() => null),
   ])
