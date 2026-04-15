@@ -1,6 +1,6 @@
 import { supabase }       from './supabase.js?v=3'
 import { analyzeAudio }  from './analyzer.js?v=5'
-import { extractArtwork } from './artwork.js?v=1'
+import { extractArtwork, extractTags } from './artwork.js?v=2'
 
 const ACCEPTED_TYPES = [
   'audio/wav', 'audio/x-wav',
@@ -101,6 +101,10 @@ async function uploadFile(file, onTrackAdded, mode = 'normal') {
 
   const blob = new Blob([arrayBuffer], { type: file.type || 'application/octet-stream' })
 
+  // Extract ID3 text tags (sync — run before the async parallel block)
+  let tags = {}
+  try { tags = extractTags(arrayBuffer) } catch {}
+
   const [uploadResult, analysis, artwork] = await Promise.all([
     supabase.storage.from('tracks').upload(storagePath, blob, { upsert: false }),
     analyzeAudio(arrayBuffer, (msg, pct) => setItemStatus(itemEl, 'progress', msg, pct), mode)
@@ -124,6 +128,9 @@ async function uploadFile(file, onTrackAdded, mode = 'normal') {
       user_id:          user.id,
       filename:         file.name,
       storage_path:     storagePath,
+      title:            tags.title         ?? null,
+      artist:           tags.artist        ?? null,
+      label:            tags.label         ?? null,
       duration_seconds: analysis?.duration ?? null,
       bpm:              analysis?.bpm      ?? null,
       key:              analysis?.key      ?? null,

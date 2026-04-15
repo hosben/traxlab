@@ -699,7 +699,7 @@ html, body {
 .track-list-header,
 .track-row {
   display: grid;
-  grid-template-columns: 44px 1fr 72px 76px 60px 1fr 36px;
+  grid-template-columns: 44px 2fr 1.5fr 72px 56px 68px 1fr 1fr 36px;
   gap: 8px;
   align-items: center;
   padding: 7px 10px;
@@ -760,6 +760,15 @@ html, body {
 }
 
 .track-row:hover { background: var(--surface) }
+
+.track-artist,
+.track-label {
+  color: var(--text-2);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .track-name {
   color: var(--text);
@@ -1328,8 +1337,8 @@ html, body {
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 0 52px 0 20px;  /* right padding reserves space for absolute collapse btn */
+  gap: 12px;
+  padding: 0 16px 0 20px;
   z-index: 50;
   transition: height .22s ease;
 }
@@ -1420,12 +1429,9 @@ html, body {
   display: block;
 }
 
-/* Collapse button: always anchored top-right, never moves */
+/* Collapse button — last item in flex flow, never moves */
 .player-collapse {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
+  flex-shrink: 0;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 7px;
@@ -1436,7 +1442,6 @@ html, body {
   align-items: center;
   justify-content: center;
   transition: border-color .15s, color .15s;
-  z-index: 1;
 }
 .player-collapse svg { width: 14px; height: 14px }
 .player-collapse:hover { border-color: var(--text-2); color: var(--text) }
@@ -1479,6 +1484,7 @@ html, body {
   background: var(--border);
   border-radius: 2px;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .player-progress-fill {
@@ -1498,8 +1504,9 @@ html, body {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0;
+  flex-shrink: 1;
   width: 200px;
+  min-width: 140px;
 }
 
 .pitch-range-cycle {

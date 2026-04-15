@@ -1,3 +1,57 @@
+// Extract cover art and text tags from ID3v2 headers (MP3)
+// Exports: extractArtwork (artwork thumbnail), extractTags (title / artist / label)
+
+// ─── Text tags ────────────────────────────────────────────────
+export function extractTags(arrayBuffer) {
+  try {
+    return parseTextFrames(new Uint8Array(arrayBuffer))
+  } catch {
+    return {}
+  }
+}
+
+function parseTextFrames(b) {
+  if (b[0] !== 0x49 || b[1] !== 0x44 || b[2] !== 0x33) return {}
+  const ver = b[3]
+  if (ver < 3) return {}
+
+  const tagSize = ((b[6] & 0x7f) << 21) | ((b[7] & 0x7f) << 14) |
+                  ((b[8] & 0x7f) <<  7) |  (b[9] & 0x7f)
+  let pos = 10
+  const end = Math.min(10 + tagSize, b.length)
+  const found = {}
+  const WANT = { TIT2: 'title', TPE1: 'artist', TPUB: 'label' }
+
+  while (pos + 10 <= end) {
+    const id = String.fromCharCode(b[pos], b[pos+1], b[pos+2], b[pos+3])
+    if (id === '\0\0\0\0') break
+
+    const sz = ver >= 4
+      ? ((b[pos+4]&0x7f)<<21)|((b[pos+5]&0x7f)<<14)|((b[pos+6]&0x7f)<<7)|(b[pos+7]&0x7f)
+      : (b[pos+4]<<24)|(b[pos+5]<<16)|(b[pos+6]<<8)|b[pos+7]
+
+    if (sz <= 0 || pos + 10 + sz > end) break
+    pos += 10
+
+    if (WANT[id]) found[WANT[id]] = decodeTextFrame(b, pos, pos + sz)
+    pos += sz
+  }
+  return found
+}
+
+function decodeTextFrame(b, start, end) {
+  if (start >= end) return null
+  const enc  = b[start]
+  const data = b.slice(start + 1, end)
+  try {
+    const str = enc === 0 ? latin1(data, 0, data.length)
+              : enc === 1 ? new TextDecoder('utf-16').decode(data)
+              : enc === 2 ? new TextDecoder('utf-16be').decode(data)
+              :              new TextDecoder('utf-8').decode(data)
+    return str.replace(/\0/g, '').trim() || null
+  } catch { return null }
+}
+
 // Extract cover art from ID3v2 tags (MP3) and resize to a small thumbnail
 
 export async function extractArtwork(arrayBuffer) {

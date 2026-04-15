@@ -20,6 +20,7 @@ export function initPlayer(neighborsCallback) {
   document.getElementById('player-next').addEventListener('click', playNext)
   document.getElementById('player-collapse-btn').addEventListener('click', toggleCollapse)
   document.getElementById('player-waveform').addEventListener('click', seekByClick)
+  document.getElementById('player-progress-strip').addEventListener('click', seekByMiniClick)
 
   // Pitch slider
   const slider = document.getElementById('pitch-slider')
@@ -56,8 +57,9 @@ export async function openTrack(track) {
   waveform     = track.waveform || []
 
   // UI metadata
-  document.getElementById('player-name').textContent      = track.filename
-  document.getElementById('player-mini-name').textContent = track.filename
+  const displayName = track.title || track.filename
+  document.getElementById('player-name').textContent      = displayName
+  document.getElementById('player-mini-name').textContent = displayName
   document.getElementById('player-bpm').textContent   = track.bpm  ? `${Number(track.bpm).toFixed(1)} BPM` : ''
   document.getElementById('player-key').textContent   = track.key  ?? ''
   setTimeDisplay(0, track.duration_seconds || 0)
@@ -124,8 +126,13 @@ function onEnded() {
 function seekByClick(e) {
   if (!audio.duration) return
   const rect = e.currentTarget.getBoundingClientRect()
-  const ratio = (e.clientX - rect.left) / rect.width
-  audio.currentTime = ratio * audio.duration
+  audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration
+}
+
+function seekByMiniClick(e) {
+  if (!audio.duration) return
+  const rect = e.currentTarget.getBoundingClientRect()
+  audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration
 }
 
 // ─── Progress ─────────────────────────────────────────────────

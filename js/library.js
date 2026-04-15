@@ -1,5 +1,5 @@
 import { supabase }        from './supabase.js?v=3'
-import { initPlayer, playerOpenTrack } from './player.js?v=4'
+import { initPlayer, playerOpenTrack } from './player.js?v=5'
 
 // ─── State ────────────────────────────────────────────────────
 const state = {
@@ -78,7 +78,12 @@ function getVisible() {
 
   if (state.search) {
     const q = state.search.toLowerCase()
-    tracks = tracks.filter(t => t.filename.toLowerCase().includes(q))
+    tracks = tracks.filter(t =>
+      (t.filename || '').toLowerCase().includes(q) ||
+      (t.title    || '').toLowerCase().includes(q) ||
+      (t.artist   || '').toLowerCase().includes(q) ||
+      (t.label    || '').toLowerCase().includes(q)
+    )
   }
 
   if (state.tagFilter) {
@@ -116,15 +121,20 @@ function render() {
   updateSelectionBar()
 }
 
+function stripExt(name) { return name.replace(/\.[^.]+$/, '') }
+
 function buildRow(track) {
   const row  = document.createElement('div')
   row.className  = 'track-row'
   row.dataset.id = track.id
 
-  const bpm  = track.bpm             ? track.bpm.toFixed(1)          : '—'
-  const key  = track.key             ?? '—'
-  const dur  = track.duration_seconds ? formatDur(track.duration_seconds) : '—'
-  const tags = track.tags || []
+  const title  = track.title  || stripExt(track.filename)
+  const artist = track.artist || ''
+  const label  = track.label  || ''
+  const bpm    = track.bpm             ? track.bpm.toFixed(1)             : '—'
+  const key    = track.key             ?? '—'
+  const dur    = track.duration_seconds ? formatDur(track.duration_seconds) : '—'
+  const tags   = track.tags || []
 
   const artworkHTML = track.artwork
     ? `<img class="track-artwork" src="${track.artwork}" alt="" />`
@@ -143,10 +153,12 @@ function buildRow(track) {
         <input type="checkbox" class="track-checkbox" ${isSelected ? 'checked' : ''} />
       </label>
     </div>
-    <span class="track-name" title="${esc(track.filename)}">${esc(track.filename)}</span>
-    <span class="track-dur">${dur}</span>
+    <span class="track-name"   title="${esc(track.filename)}">${esc(title)}</span>
+    <span class="track-artist" title="${esc(artist)}">${esc(artist)}</span>
     <span class="track-bpm">${bpm}</span>
     <span class="track-key">${esc(key)}</span>
+    <span class="track-dur">${dur}</span>
+    <span class="track-label"  title="${esc(label)}">${esc(label)}</span>
     <div class="track-tags">
       ${tags.map(raw => {
         const { name, color } = parseTag(raw)
