@@ -85,7 +85,10 @@ function toggleMode(e) {
 function onAuthSuccess(session) {
   document.getElementById('auth-screen').classList.add('hidden')
   document.getElementById('app-screen').classList.remove('hidden')
-  document.getElementById('user-email').textContent = session.user.email
+  const email = session.user.email
+  document.getElementById('user-email').textContent = email
+  const avatarEl = document.getElementById('user-avatar')
+  if (avatarEl) avatarEl.textContent = email.charAt(0).toUpperCase()
 
   if (typeof window.__onAppReady === 'function') {
     window.__onAppReady()

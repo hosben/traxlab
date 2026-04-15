@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=17" />
+  <link rel="stylesheet" href="style.css?v=18" />
 </head>
 <body>
 
@@ -57,8 +57,37 @@
       <path d="M612.43,76.27v195.71c16.15-3.43,33.35-2.81,48.52-10.05l-6.11,32.67h-81.58c5.14-10.38,7.16-21.69,7.92-33.2V109.11c-.82-11.38-2.85-22.57-7.92-32.84h39.17Z"/>
     </svg>
     <div class="header-spacer"></div>
-    <span id="user-email"></span>
-    <button class="btn-signout" id="btn-signout">Sign out</button>
+
+    <!-- User menu -->
+    <div class="user-menu" id="user-menu">
+      <button class="user-menu-btn" id="user-menu-btn" aria-haspopup="true" aria-expanded="false">
+        <span class="user-avatar" id="user-avatar">?</span>
+        <span class="user-email-label" id="user-email"></span>
+        <svg class="user-menu-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 7.5L10 12.5L15 7.5"/>
+        </svg>
+      </button>
+
+      <div class="user-menu-dropdown" id="user-menu-dropdown" hidden>
+        <div class="user-menu-section-label">Theme</div>
+        <button class="theme-btn" data-theme="pure">
+          <span class="theme-swatch" style="background:#7c6af7"></span>
+          <span class="theme-name">Traxlab Pure</span>
+          <svg class="theme-check-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 0 1 0 1.414l-8 8a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 1.414-1.414L8 12.586l7.293-7.293a1 1 0 0 1 1.414 0z"/></svg>
+        </button>
+        <button class="theme-btn" data-theme="mint">
+          <span class="theme-swatch" style="background:#1DCD9F"></span>
+          <span class="theme-name">Traxlab Mint</span>
+          <svg class="theme-check-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 0 1 0 1.414l-8 8a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 1.414-1.414L8 12.586l7.293-7.293a1 1 0 0 1 1.414 0z"/></svg>
+        </button>
+        <div class="user-menu-divider"></div>
+        <button class="user-menu-signout" id="btn-signout">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4.25A2.25 2.25 0 0 1 5.25 2h5.5A2.25 2.25 0 0 1 13 4.25v2a.75.75 0 0 1-1.5 0v-2a.75.75 0 0 0-.75-.75h-5.5a.75.75 0 0 0-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 0 0 .75-.75v-2a.75.75 0 0 1 1.5 0v2A2.25 2.25 0 0 1 10.75 18h-5.5A2.25 2.25 0 0 1 3 15.75V4.25zm11.47 4.22a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06l-2.25 2.25a.75.75 0 1 1-1.06-1.06l.97-.97H8a.75.75 0 0 1 0-1.5h7.44l-.97-.97a.75.75 0 0 1 0-1.06z" clip-rule="evenodd"/></svg>
+          Sign out
+        </button>
+      </div>
+    </div>
+
   </header>
 
   <div class="app-body">
@@ -87,20 +116,6 @@
         <div id="devices-display"></div>
       </div>
 
-      <!-- Theme switcher -->
-      <div class="sidebar-section sidebar-themes">
-        <div class="sidebar-label"><span>Theme</span></div>
-        <button class="theme-btn" data-theme="pure">
-          <span class="theme-swatch" style="background:#7c6af7"></span>
-          <span class="theme-name">Traxlab Pure</span>
-          <span class="theme-check">✓</span>
-        </button>
-        <button class="theme-btn" data-theme="mint">
-          <span class="theme-swatch" style="background:#1DCD9F"></span>
-          <span class="theme-name">Traxlab Mint</span>
-          <span class="theme-check">✓</span>
-        </button>
-      </div>
     </aside>
 
     <!-- ── Main content ── -->
@@ -306,10 +321,34 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     initAuth()
+
+    // ── User menu ──────────────────────────────────────────
+    const menuBtn      = document.getElementById('user-menu-btn')
+    const menuDropdown = document.getElementById('user-menu-dropdown')
+
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      const open = !menuDropdown.hidden
+      menuDropdown.hidden = open
+      menuBtn.setAttribute('aria-expanded', String(!open))
+    })
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!document.getElementById('user-menu').contains(e.target)) {
+        menuDropdown.hidden = true
+        menuBtn.setAttribute('aria-expanded', 'false')
+      }
+    })
+
     document.getElementById('btn-signout').addEventListener('click', signOut)
 
     document.querySelectorAll('.theme-btn').forEach(btn => {
-      btn.addEventListener('click', () => applyTheme(btn.dataset.theme))
+      btn.addEventListener('click', () => {
+        applyTheme(btn.dataset.theme)
+        menuDropdown.hidden = true
+        menuBtn.setAttribute('aria-expanded', 'false')
+      })
     })
   })
 
