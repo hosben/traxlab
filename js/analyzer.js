@@ -64,57 +64,74 @@ async function detectBPM(audioBuffer) {
   const maxSamples = Math.floor(Math.min(audioBuffer.duration, MAX_BPM_DURATION) * sr)
 
   // Lowpass at 150 Hz to isolate kick/bass
-  const offCtx  = new OfflineAudioContext(1, maxSamples, sr)
-  const src     = offCtx.createBufferSource()
-  src.buffer    = audioBuffer
+  const offCtx = new OfflineAudioContext(1, maxSamples, sr)
+  const src    = offCtx.createBufferSource()
+  src.buffer   = audioBuffer
 
-  const lp      = offCtx.createBiquadFilter()
-  lp.type       = 'lowpass'
+  const lp = offCtx.createBiquadFilter()
+  lp.type  = 'lowpass'
   lp.frequency.value = 150
-  lp.Q.value    = 1
+  lp.Q.value = 1
 
   src.connect(lp)
   lp.connect(offCtx.destination)
   src.start(0)
 
-  const filtered   = await offCtx.startRendering()
-  const data       = filtered.getChannelData(0)
+  const filtered = await offCtx.startRendering()
+  const data     = filtered.getChannelData(0)
 
-  // Energy in 10 ms frames
-  const frameSize  = Math.floor(sr * 0.01)
-  const numFrames  = Math.floor(data.length / frameSize)
-  const energy     = new Float32Array(numFrames)
+  // RMS energy per 10 ms frame
+  const frameSize = Math.floor(sr * 0.01)
+  const numFrames = Math.floor(data.length / frameSize)
+  const energy    = new Float32Array(numFrames)
 
   for (let i = 0; i < numFrames; i++) {
     let e = 0
     const off = i * frameSize
     for (let j = 0; j < frameSize; j++) e += data[off + j] ** 2
-    energy[i] = e / frameSize
+    energy[i] = Math.sqrt(e / frameSize)
   }
 
-  // Onset strength: positive first-order difference
+  // Log-compressed onset strength — equalises weak and strong beats so
+  // quieter hits aren't ignored and loud kicks don't dominate.
   const onsets = new Float32Array(numFrames)
   for (let i = 1; i < numFrames; i++) {
-    onsets[i] = Math.max(0, energy[i] - energy[i - 1])
+    const diff = Math.log1p(energy[i] * 1000) - Math.log1p(energy[i - 1] * 1000)
+    onsets[i]  = Math.max(0, diff)
   }
 
-  // Autocorrelation over 60–200 BPM range
-  const fps    = 1 / 0.01             // 100 frames/sec
-  const minLag = Math.floor(fps * 60 / 200)
-  const maxLag = Math.floor(fps * 60 / 60)
+  // Autocorrelation over 60–200 BPM
+  const fps    = 100  // frames per second (1 / 0.01)
+  const minLag = Math.floor(fps * 60 / 200)   // 30 → 200 BPM
+  const maxLag = Math.floor(fps * 60 / 60)    // 100 → 60 BPM
 
-  let bestCorr = -Infinity
-  let bestLag  = Math.floor(fps * 60 / 120)
-
+  const ac = new Float32Array(maxLag + 1)
   for (let lag = minLag; lag <= maxLag; lag++) {
-    let corr = 0
-    const limit = onsets.length - lag
-    for (let i = 0; i < limit; i++) corr += onsets[i] * onsets[i + lag]
-    if (corr > bestCorr) { bestCorr = corr; bestLag = lag }
+    let c = 0
+    const n = onsets.length - lag
+    for (let i = 0; i < n; i++) c += onsets[i] * onsets[i + lag]
+    ac[lag] = c
   }
 
-  const raw = 60 / (bestLag / fps)
-  return Math.round(raw * 10) / 10  // 1 decimal place
+  // Harmonic-weighted score: for each candidate lag, also add the
+  // correlation at 2× and 3× that lag (the sub-harmonics).
+  // A true beat period shows up strongly at *all* its multiples, while
+  // a half-tempo false positive only scores well at its own lag.
+  // This directly fixes the common "128 BPM detected as 64 BPM" problem.
+  const scores = new Float32Array(maxLag + 1)
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let s = ac[lag]
+    if (lag * 2 <= maxLag) s += 0.5  * ac[lag * 2]
+    if (lag * 3 <= maxLag) s += 0.25 * ac[lag * 3]
+    scores[lag] = s
+  }
+
+  let bestLag = minLag
+  for (let lag = minLag + 1; lag <= maxLag; lag++) {
+    if (scores[lag] > scores[bestLag]) bestLag = lag
+  }
+
+  return Math.round((60 / (bestLag / fps)) * 10) / 10
 }
 
 // ─── Key (Krumhansl-Schmuckler) ───────────────────────────────

@@ -1,5 +1,5 @@
 import { supabase }       from './supabase.js?v=3'
-import { analyzeAudio }  from './analyzer.js?v=3'
+import { analyzeAudio }  from './analyzer.js?v=4'
 import { extractArtwork } from './artwork.js?v=1'
 
 const ACCEPTED_TYPES = [
