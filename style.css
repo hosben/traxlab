@@ -1329,8 +1329,9 @@ html, body {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 0 20px;
+  padding: 0 52px 0 20px;  /* right padding reserves space for absolute collapse btn */
   z-index: 50;
+  transition: height .22s ease;
 }
 
 .player-info {
@@ -1419,30 +1420,75 @@ html, body {
   display: block;
 }
 
+/* Collapse button: always anchored top-right, never moves */
 .player-collapse {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
   color: var(--text-2);
   cursor: pointer;
-  padding: 4px;
+  padding: 6px;
   border-radius: 6px;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: color .12s, background .12s;
+  z-index: 1;
 }
 .player-collapse svg { width: 16px; height: 16px }
 .player-collapse:hover { color: var(--text); background: var(--surface-2) }
 
 /* ─── Player collapsed state ────────────────────────────────── */
 .player-panel.collapsed {
-  height: 48px;
+  height: 40px;
 }
+/* Hide full-state elements when collapsed */
+.player-panel.collapsed .player-info,
+.player-panel.collapsed .player-controls,
 .player-panel.collapsed .player-timeline,
 .player-panel.collapsed .pitch-wrap {
   display: none;
 }
+/* Show mini view only when collapsed */
+.player-mini {
+  display: none;
+  flex: 1;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.player-panel.collapsed .player-mini { display: flex; }
+
+.player-mini-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  max-width: 220px;
+}
+
+.player-progress-strip {
+  flex: 1;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.player-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width .1s linear;
+}
+
 #app-screen.has-player .app-body {
   padding-bottom: 72px;
 }

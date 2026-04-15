@@ -50,7 +50,8 @@ export async function openTrack(track) {
   waveform     = track.waveform || []
 
   // UI metadata
-  document.getElementById('player-name').textContent  = track.filename
+  document.getElementById('player-name').textContent      = track.filename
+  document.getElementById('player-mini-name').textContent = track.filename
   document.getElementById('player-bpm').textContent   = track.bpm  ? `${Number(track.bpm).toFixed(1)} BPM` : ''
   document.getElementById('player-key').textContent   = track.key  ?? ''
   setTimeDisplay(0, track.duration_seconds || 0)
@@ -126,6 +127,7 @@ function onTimeUpdate() {
   const progress = audio.duration ? audio.currentTime / audio.duration : 0
   setTimeDisplay(audio.currentTime, audio.duration)
   drawWaveform(progress)
+  document.getElementById('player-progress-fill').style.width = `${progress * 100}%`
 }
 
 // ─── Waveform canvas ─────────────────────────────────────────
