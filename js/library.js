@@ -1,5 +1,5 @@
-import { supabase }        from './supabase.js?v=2'
-import { initPlayer, playerOpenTrack } from './player.js?v=2'
+import { supabase }        from './supabase.js?v=3'
+import { initPlayer, playerOpenTrack } from './player.js?v=3'
 
 // ─── State ────────────────────────────────────────────────────
 const state = {
@@ -9,6 +9,7 @@ const state = {
   search:        '',
   sort:          { field: 'created_at', dir: 'desc' },
   tagFilter:     null,     // name only (no color)
+  selected:      new Set(), // selected track ids
 }
 
 // ─── Tag helpers ──────────────────────────────────────────────
@@ -35,6 +36,7 @@ export async function initLibrary() {
 
   setupSearch()
   setupSort()
+  setupSelectionBar()
   render()
 
   initPlayer(getNeighbors)
@@ -51,12 +53,14 @@ function getNeighbors(trackId) {
 
 // ─── View switching (called by playlists.js) ──────────────────
 export function setView(view, playlistIds = []) {
-  state.view       = view
+  state.view        = view
   state.playlistIds = playlistIds
-  state.search     = ''
-  state.tagFilter  = null
+  state.search      = ''
+  state.tagFilter   = null
+  state.selected.clear()
   document.getElementById('search-input').value = ''
   updateTagFilterBadge()
+  updateSelectionBar()
   render()
 }
 
@@ -104,10 +108,12 @@ function render() {
 
   if (!tracks.length) {
     empty.classList.remove('hidden')
+    updateSelectionBar()
     return
   }
   empty.classList.add('hidden')
   tracks.forEach(t => list.appendChild(buildRow(t)))
+  updateSelectionBar()
 }
 
 function buildRow(track) {
@@ -120,7 +126,23 @@ function buildRow(track) {
   const dur  = track.duration_seconds ? formatDur(track.duration_seconds) : '—'
   const tags = track.tags || []
 
+  const artworkHTML = track.artwork
+    ? `<img class="track-artwork" src="${track.artwork}" alt="" />`
+    : `<div class="track-artwork-placeholder">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M18 3a1 1 0 0 0-1.196-.98l-10 2A1 1 0 0 0 6 5v9.114A4.369 4.369 0 0 0 5 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0 0 15 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/>
+        </svg>
+      </div>`
+
+  const isSelected = state.selected.has(track.id)
+
   row.innerHTML = `
+    <div class="track-art-cell">
+      ${artworkHTML}
+      <label class="track-cb-wrap${isSelected ? ' track-cb-visible' : ''}">
+        <input type="checkbox" class="track-checkbox" ${isSelected ? 'checked' : ''} />
+      </label>
+    </div>
     <span class="track-name" title="${esc(track.filename)}">${esc(track.filename)}</span>
     <span class="track-dur">${dur}</span>
     <span class="track-bpm">${bpm}</span>
@@ -140,10 +162,24 @@ function buildRow(track) {
     <button class="track-menu-btn" data-id="${track.id}">⋯</button>
   `
 
-  // Click row → open player (ignore clicks on interactive children)
+  // Click row → open player (ignore interactive children)
   row.addEventListener('click', e => {
-    if (e.target.closest('.track-tags, .track-menu-btn, .tag-x, .tag-add, .tag-input')) return
+    if (e.target.closest('.track-tags, .track-menu-btn, .tag-x, .tag-add, .tag-input, .track-art-cell')) return
     playerOpenTrack(track)
+  })
+
+  // Checkbox → toggle selection
+  const cb = row.querySelector('.track-checkbox')
+  const cbWrap = row.querySelector('.track-cb-wrap')
+  cb.addEventListener('change', () => {
+    if (cb.checked) {
+      state.selected.add(track.id)
+      cbWrap.classList.add('track-cb-visible')
+    } else {
+      state.selected.delete(track.id)
+      cbWrap.classList.remove('track-cb-visible')
+    }
+    updateSelectionBar()
   })
 
   // Tag chip → filter by name
@@ -322,6 +358,29 @@ async function deleteTrack(trackId) {
 
   state.allTracks = state.allTracks.filter(t => t.id !== trackId)
   render()
+}
+
+// ─── Selection bar ────────────────────────────────────────────
+function setupSelectionBar() {
+  document.getElementById('selection-playlist-btn').addEventListener('click', () => {
+    if (state.selected.size) window.__showAddToPlaylist?.([...state.selected])
+  })
+  document.getElementById('selection-clear-btn').addEventListener('click', () => {
+    state.selected.clear()
+    render()
+  })
+}
+
+function updateSelectionBar() {
+  const bar   = document.getElementById('selection-bar')
+  const count = state.selected.size
+  if (count > 0) {
+    bar.classList.remove('hidden')
+    document.getElementById('selection-count').textContent =
+      `${count} track${count === 1 ? '' : 's'} selected`
+  } else {
+    bar.classList.add('hidden')
+  }
 }
 
 // ─── Search ───────────────────────────────────────────────────

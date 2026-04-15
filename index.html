@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=6" />
 </head>
 <body>
 
@@ -139,7 +139,15 @@
 
       <!-- Track list -->
       <div id="track-list-wrap">
+        <!-- Selection bar (shown when tracks are checked) -->
+        <div id="selection-bar" class="selection-bar hidden">
+          <span id="selection-count"></span>
+          <button id="selection-playlist-btn" class="btn-selection-action">Add to playlist</button>
+          <button id="selection-clear-btn"    class="btn-selection-clear">Clear selection</button>
+        </div>
+
         <div class="track-list-header">
+          <span></span><!-- artwork -->
           <span class="sortable" data-sort="filename">File</span>
           <span class="sortable" data-sort="duration_seconds">Duration</span>
           <span class="sortable" data-sort="bpm">BPM</span>
@@ -210,12 +218,12 @@
 </div>
 
 <script type="module">
-  import { initAuth, signOut }               from './js/auth.js?v=2'
-  import { initUpload }                      from './js/upload.js?v=2'
-  import { initLibrary, addTrackToList }     from './js/library.js?v=2'
-  import { initPlaylists }                   from './js/playlists.js?v=2'
-  import { exportRekordbox }                 from './js/exporter.js?v=2'
-  import { initDevices }                     from './js/devices.js?v=2'
+  import { initAuth, signOut }               from './js/auth.js?v=3'
+  import { initUpload }                      from './js/upload.js?v=3'
+  import { initLibrary, addTrackToList }     from './js/library.js?v=3'
+  import { initPlaylists }                   from './js/playlists.js?v=3'
+  import { exportRekordbox }                 from './js/exporter.js?v=3'
+  import { initDevices }                     from './js/devices.js?v=3'
 
   // ── Theme ──────────────────────────────────────────────────
   function applyTheme(theme) {

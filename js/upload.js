@@ -1,5 +1,6 @@
-import { supabase }     from './supabase.js?v=2'
-import { analyzeAudio } from './analyzer.js?v=2'
+import { supabase }       from './supabase.js?v=3'
+import { analyzeAudio }  from './analyzer.js?v=3'
+import { extractArtwork } from './artwork.js?v=1'
 
 const ACCEPTED_TYPES = [
   'audio/wav', 'audio/x-wav',
@@ -74,10 +75,11 @@ async function uploadFile(file, onTrackAdded) {
 
   const blob = new Blob([arrayBuffer], { type: file.type || 'application/octet-stream' })
 
-  const [uploadResult, analysis] = await Promise.all([
+  const [uploadResult, analysis, artwork] = await Promise.all([
     supabase.storage.from('tracks').upload(storagePath, blob, { upsert: false }),
     analyzeAudio(arrayBuffer, (msg, pct) => setItemStatus(itemEl, 'progress', msg, pct))
       .catch(err => { console.error('[Traxlab] analysis error:', err); return null }),
+    extractArtwork(arrayBuffer).catch(() => null),
   ])
 
   console.log('[Traxlab] analysis:', analysis?.bpm, analysis?.key, analysis?.duration)
@@ -100,6 +102,7 @@ async function uploadFile(file, onTrackAdded) {
       bpm:              analysis?.bpm      ?? null,
       key:              analysis?.key      ?? null,
       waveform:         analysis?.waveform ?? null,
+      artwork:          artwork            ?? null,
     })
     .select()
     .single()

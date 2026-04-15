@@ -1,4 +1,4 @@
-import { getXMLContent } from './exporter.js?v=2'
+import { getXMLContent } from './exporter.js?v=3'
 
 let _dirHandle = null
 

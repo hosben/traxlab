@@ -1,4 +1,4 @@
-import { supabase } from './supabase.js'
+import { supabase } from './supabase.js?v=3'
 
 // ─── Public API ───────────────────────────────────────────────
 export async function exportRekordbox() {

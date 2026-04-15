@@ -1,5 +1,5 @@
-import { supabase } from './supabase.js'
-import { setView }   from './library.js'
+import { supabase } from './supabase.js?v=3'
+import { setView }   from './library.js?v=3'
 
 let playlists        = []
 let activePlaylistId = null
@@ -194,11 +194,18 @@ async function openPlaylist(pl) {
 }
 
 // ─── Add to playlist modal ────────────────────────────────────
-let pendingTrackId = null
+let pendingTrackIds = []
 
-function showAddToPlaylistModal(trackId) {
-  pendingTrackId = trackId
-  const list = document.getElementById('modal-playlist-list')
+function showAddToPlaylistModal(trackIds) {
+  // Accept single ID or array
+  pendingTrackIds = Array.isArray(trackIds) ? trackIds : [trackIds]
+
+  const list  = document.getElementById('modal-playlist-list')
+  const count = pendingTrackIds.length
+  const label = count > 1 ? `${count} tracks` : '1 track'
+
+  document.querySelector('#modal-overlay .modal-header h3').textContent =
+    count > 1 ? `Add ${label} to playlist` : 'Add to playlist'
 
   if (!playlists.length) {
     list.innerHTML = '<p class="modal-empty">No playlists yet — create one first.</p>'
@@ -209,7 +216,9 @@ function showAddToPlaylistModal(trackId) {
 
     list.querySelectorAll('.modal-pl-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
-        await addTrackToPlaylist(btn.dataset.id, pendingTrackId)
+        btn.disabled = true
+        btn.textContent = 'Adding…'
+        await addTracksToPlaylist(btn.dataset.id, pendingTrackIds)
         closeModal()
       })
     })
@@ -218,7 +227,7 @@ function showAddToPlaylistModal(trackId) {
   document.getElementById('modal-overlay').classList.remove('hidden')
 }
 
-async function addTrackToPlaylist(playlistId, trackId) {
+async function addTracksToPlaylist(playlistId, trackIds) {
   const { data } = await supabase
     .from('playlist_tracks')
     .select('position')
@@ -226,13 +235,16 @@ async function addTrackToPlaylist(playlistId, trackId) {
     .order('position', { ascending: false })
     .limit(1)
 
-  const position = data?.[0]?.position != null ? data[0].position + 1 : 0
+  let position = data?.[0]?.position != null ? data[0].position + 1 : 0
 
-  await supabase.from('playlist_tracks').upsert({
+  // Batch upsert all tracks at once
+  const rows = trackIds.map((id, i) => ({
     playlist_id: playlistId,
-    track_id:    trackId,
-    position,
-  })
+    track_id:    id,
+    position:    position + i,
+  }))
+
+  await supabase.from('playlist_tracks').upsert(rows)
 
   if (activePlaylistId === playlistId) {
     const pl = playlists.find(p => p.id === playlistId)
