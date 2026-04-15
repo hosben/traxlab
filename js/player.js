@@ -323,6 +323,8 @@ function applyVolume(pct) {
   const slider = document.getElementById('volume-slider')
   slider.value = pct
   slider.style.setProperty('--vol-pct', `${pct}%`)
+  const label = document.getElementById('volume-label')
+  if (label) label.textContent = pct
 }
 
 // ─── Expose for library.js ────────────────────────────────────

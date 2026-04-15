@@ -1566,18 +1566,43 @@ html, body {
 }
 
 /* ── 4 · Volume ── */
+/*
+  Default: shows a number label.
+  Hover:   expands 35% and cross-fades to the vertical slider.
+  Both children share the same grid cell so they overlap cleanly.
+*/
 .player-volume {
   flex-shrink: 0;
   width: 40px;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   border-right: 1px solid var(--border);
-  overflow: hidden;
+  overflow: visible;        /* allow slider CSS box to extend slightly */
+  transition: width .22s ease;
+  cursor: default;
 }
+.player-volume:hover { width: 54px; }   /* 40 × 1.35 ≈ 54 */
 
-/* Vertical slider: rotate a 44px horizontal track */
+/* Both children occupy the same grid cell */
+.volume-label,
+.volume-slider { grid-area: 1 / 1; }
+
+/* ── Number label (shown by default) ── */
+.volume-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity .2s;
+}
+.player-volume:hover .volume-label { opacity: 0; }
+
+/* ── Vertical slider (shown on hover) ── */
 .volume-slider {
   -webkit-appearance: none;
   appearance: none;
@@ -1587,7 +1612,9 @@ html, body {
   cursor: pointer;
   outline: none;
   transform: rotate(-90deg);
-  flex-shrink: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
   background: linear-gradient(
     to right,
     var(--accent) 0%,
@@ -1595,6 +1622,10 @@ html, body {
     var(--border)  var(--vol-pct, 100%),
     var(--border)  100%
   );
+}
+.player-volume:hover .volume-slider {
+  opacity: 1;
+  pointer-events: auto;
 }
 .volume-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
