@@ -1366,7 +1366,7 @@ html, body {
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0;                 /* sections control their own spacing */
   padding: 0 16px 0 20px;
   z-index: 50;
   transition: height .22s ease;
@@ -1377,8 +1377,9 @@ html, body {
   flex-direction: column;
   gap: 3px;
   min-width: 0;
-  width: 200px;
+  width: 180px;
   flex-shrink: 0;
+  margin-right: 12px;
 }
 
 .player-name {
@@ -1400,6 +1401,7 @@ html, body {
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
+  margin-right: 16px;
 }
 
 .player-btn {
@@ -1438,7 +1440,8 @@ html, body {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 0;
+  min-width: 120px;
+  margin-right: 16px;
 }
 
 .player-time {
@@ -1461,6 +1464,7 @@ html, body {
 /* Collapse button — last item in flex flow, never moves */
 .player-collapse {
   flex-shrink: 0;
+  margin-left: 12px;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 7px;
@@ -1493,6 +1497,7 @@ html, body {
   align-items: center;
   gap: 14px;
   min-width: 0;
+  margin-right: 0;
 }
 .player-panel.collapsed .player-mini { display: flex; }
 
@@ -1532,11 +1537,11 @@ html, body {
 .pitch-wrap {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-shrink: 1;
-  width: 190px;
-  min-width: 120px;
-  overflow: hidden;   /* prevents internal content overflowing onto collapse btn */
+  gap: 8px;
+  flex-shrink: 0;     /* never compress — fixed zone */
+  width: 175px;
+  border-left: 1px solid var(--border);
+  padding-left: 16px;
 }
 
 .pitch-range-cycle {
