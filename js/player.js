@@ -1,10 +1,11 @@
-import { supabase } from './supabase.js'
+import { supabase } from './supabase.js?v=3'
 
 // ─── State ────────────────────────────────────────────────────
 let audio        = new Audio()
 let currentTrack = null
 let waveform     = []
-let getNeighbors = () => ({ prev: null, next: null }) // injected by library.js
+let pitchPct     = 0
+let getNeighbors = () => ({ prev: null, next: null })
 
 // ─── Init ─────────────────────────────────────────────────────
 export function initPlayer(neighborsCallback) {
@@ -15,6 +16,15 @@ export function initPlayer(neighborsCallback) {
   document.getElementById('player-next').addEventListener('click', playNext)
   document.getElementById('player-close-btn').addEventListener('click', closePlayer)
   document.getElementById('player-waveform').addEventListener('click', seekByClick)
+
+  // Pitch slider
+  const slider = document.getElementById('pitch-slider')
+  slider.addEventListener('input', () => applyPitch(parseFloat(slider.value)))
+  slider.addEventListener('dblclick', resetPitch)
+  document.getElementById('pitch-reset-btn').addEventListener('click', resetPitch)
+
+  // Init fill at 0
+  setPitchFill(0)
 
   audio.addEventListener('timeupdate', onTimeUpdate)
   audio.addEventListener('ended',      onEnded)
@@ -31,6 +41,7 @@ export async function openTrack(track) {
   setActiveRow(track.id)
 
   currentTrack = track
+  resetPitch()
   waveform     = track.waveform || []
 
   // UI metadata
@@ -86,6 +97,7 @@ function closePlayer() {
   audio.pause()
   audio.src = ''
   currentTrack = null
+  resetPitch()
   document.getElementById('player-panel').classList.add('hidden')
   document.getElementById('app-screen').classList.remove('has-player')
   setActiveRow(null)
@@ -174,6 +186,54 @@ function formatTime(s) {
   const m = Math.floor(s / 60)
   const sec = Math.floor(s % 60).toString().padStart(2, '0')
   return `${m}:${sec}`
+}
+
+// ─── Pitch ────────────────────────────────────────────────────
+function applyPitch(pct) {
+  pitchPct = pct
+  audio.playbackRate = 1 + pct / 100
+  setPitchFill(pct)
+  updateBpmDisplay()
+}
+
+function resetPitch() {
+  pitchPct = 0
+  audio.playbackRate = 1
+  const slider = document.getElementById('pitch-slider')
+  slider.value = 0
+  setPitchFill(0)
+  updateBpmDisplay()
+}
+
+function setPitchFill(pct) {
+  const slider   = document.getElementById('pitch-slider')
+  const label    = document.getElementById('pitch-pct-label')
+  const min      = parseFloat(slider.min)   // -8
+  const max      = parseFloat(slider.max)   //  8
+  const range    = max - min
+
+  // % position of center (0) and current value in the slider track
+  const centerPct = ((0 - min) / range) * 100
+  const valuePct  = ((pct - min) / range) * 100
+
+  const left  = Math.min(centerPct, valuePct)
+  const right = 100 - Math.max(centerPct, valuePct)
+
+  slider.style.setProperty('--fill-left',  `${left}%`)
+  slider.style.setProperty('--fill-right', `${right}%`)
+
+  const sign  = pct > 0 ? '+' : ''
+  label.textContent = pct === 0 ? '0%' : `${sign}${pct.toFixed(1)}%`
+  label.classList.toggle('pitch-label--active', pct !== 0)
+}
+
+function updateBpmDisplay() {
+  if (!currentTrack?.bpm) return
+  const shifted = currentTrack.bpm * (1 + pitchPct / 100)
+  document.getElementById('player-bpm').textContent =
+    pitchPct === 0
+      ? `${Number(currentTrack.bpm).toFixed(1)} BPM`
+      : `${shifted.toFixed(1)} BPM`
 }
 
 // ─── Expose for library.js ────────────────────────────────────

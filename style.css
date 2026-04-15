@@ -1437,6 +1437,102 @@ html, body {
 }
 .player-close:hover { color: var(--text) }
 
+/* ─── Pitch control ─────────────────────────────────────────── */
+.pitch-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  width: 160px;
+}
+
+.pitch-label-head {
+  font-size: 10px;
+  color: var(--text-2);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+/* Custom range slider */
+.pitch-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  cursor: pointer;
+  outline: none;
+  background:
+    linear-gradient(
+      to right,
+      var(--border) 0%,
+      var(--border) var(--fill-left, 50%),
+      var(--accent) var(--fill-left, 50%),
+      var(--accent) calc(100% - var(--fill-right, 50%)),
+      var(--border) calc(100% - var(--fill-right, 50%)),
+      var(--border) 100%
+    );
+}
+
+.pitch-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--accent);
+  transition: transform .1s;
+}
+
+.pitch-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.pitch-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--accent);
+  cursor: pointer;
+}
+
+.pitch-pct-label {
+  font-size: 11px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  width: 38px;
+  text-align: right;
+  flex-shrink: 0;
+  transition: color .15s;
+}
+
+.pitch-pct-label.pitch-label--active {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.pitch-reset-btn {
+  background: none;
+  border: none;
+  color: var(--text-2);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color .12s, background .12s;
+}
+
+.pitch-reset-btn:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
 /* ─── Playing row highlight ─────────────────────────────────── */
 .track-row.playing {
   background: color-mix(in srgb, var(--accent) 8%, transparent);
