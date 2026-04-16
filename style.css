@@ -1598,7 +1598,8 @@ html, body {
   left: 50%;
   transform: translateX(-50%) translateY(6px);
   width: 36px;
-  padding: 14px 0;
+  height: 108px;  /* 80px track + 14px top + 14px bottom */
+  overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
