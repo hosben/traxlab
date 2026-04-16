@@ -8,7 +8,7 @@ let pitchPct     = 0
 let pitchRange   = 6        // active range in % (±6, ±10, ±16, ±100)
 let collapsed    = false
 let timeMode     = 'elapsed' // 'elapsed' | 'remaining' | 'total'
-let volumePct    = 100       // 0–100
+let volumePct    = 10        // 0–10 display scale
 let getNeighbors = () => ({ prev: null, next: null })
 
 const PITCH_RANGES = [6, 10, 16, 100]
@@ -27,7 +27,7 @@ export function initPlayer(neighborsCallback) {
   // Volume
   const volSlider = document.getElementById('volume-slider')
   volSlider.addEventListener('input', () => applyVolume(parseInt(volSlider.value)))
-  applyVolume(100)
+  applyVolume(10)
 
   // Pitch slider
   const slider = document.getElementById('pitch-slider')
@@ -317,14 +317,16 @@ function updateBpmDisplay() {
 }
 
 // ─── Volume ───────────────────────────────────────────────────
-function applyVolume(pct) {
-  volumePct = pct
-  audio.volume = pct / 100
+function applyVolume(level) {  // level: 0–10
+  volumePct  = level
+  audio.volume = level / 10
   const slider = document.getElementById('volume-slider')
-  slider.value = pct
-  slider.style.setProperty('--vol-pct', `${pct}%`)
+  if (slider) {
+    slider.value = level
+    slider.style.setProperty('--vol-pct', `${level * 10}%`)
+  }
   const label = document.getElementById('volume-label')
-  if (label) label.textContent = pct
+  if (label) label.textContent = level
 }
 
 // ─── Expose for library.js ────────────────────────────────────

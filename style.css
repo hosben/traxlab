@@ -1434,7 +1434,6 @@ html, body {
   align-items: center;
   padding: 0;
   z-index: 50;
-  overflow: hidden;
   transition: height .22s ease;
 }
 
@@ -1566,31 +1565,21 @@ html, body {
 }
 
 /* ── 4 · Volume ── */
-/*
-  Default: shows a number label.
-  Hover:   expands 35% and cross-fades to the vertical slider.
-  Both children share the same grid cell so they overlap cleanly.
-*/
 .player-volume {
+  position: relative;
   flex-shrink: 0;
   width: 40px;
   height: 100%;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-right: 1px solid var(--border);
-  overflow: visible;        /* allow slider CSS box to extend slightly */
-  transition: width .22s ease;
-  cursor: default;
+  z-index: 10;
 }
-.player-volume:hover { width: 54px; }   /* 40 × 1.35 ≈ 54 */
 
-/* Both children occupy the same grid cell */
-.volume-label,
-.volume-slider { grid-area: 1 / 1; }
-
-/* ── Number label (shown by default) ── */
+/* Number label — shown at rest */
 .volume-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
@@ -1598,23 +1587,45 @@ html, body {
   line-height: 1;
   pointer-events: none;
   user-select: none;
-  transition: opacity .2s;
+  transition: opacity .18s;
 }
 .player-volume:hover .volume-label { opacity: 0; }
 
-/* ── Vertical slider (shown on hover) ── */
+/* Popup card — slides up from the player bar on hover */
+.volume-popup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  width: 36px;
+  padding: 14px 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, .45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+.player-volume:hover .volume-popup {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Vertical slider inside the popup */
 .volume-slider {
   -webkit-appearance: none;
   appearance: none;
-  width: 44px;
+  width: 80px;   /* track length — becomes height after rotation */
   height: 4px;
   border-radius: 2px;
   cursor: pointer;
   outline: none;
   transform: rotate(-90deg);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .2s;
   background: linear-gradient(
     to right,
     var(--accent) 0%,
@@ -1623,29 +1634,27 @@ html, body {
     var(--border)  100%
   );
 }
-.player-volume:hover .volume-slider {
-  opacity: 1;
-  pointer-events: auto;
-}
 .volume-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--text);
   border: 2px solid var(--surface);
   box-shadow: 0 0 0 1px var(--accent);
   transition: transform .1s;
+  cursor: grab;
 }
-.volume-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+.volume-slider::-webkit-slider-thumb:hover  { transform: scale(1.2); }
+.volume-slider::-webkit-slider-thumb:active { cursor: grabbing; }
 .volume-slider::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--text);
   border: 2px solid var(--surface);
   box-shadow: 0 0 0 1px var(--accent);
-  cursor: pointer;
+  cursor: grab;
 }
 
 /* ── 5 · Time toggle ── */
